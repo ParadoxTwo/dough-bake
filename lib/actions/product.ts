@@ -229,7 +229,7 @@ export async function createProduct(formData: ProductFormData): Promise<{ produc
       name: variantData.name,
       slug: variantSlug,
       description: variantData.description || null,
-      price_adjustment: variantData.priceAdjustment,
+      price: variantData.price,
       stock_type: variantData.stockType,
       stock_quantity: variantData.stockQuantity,
       available: true,
@@ -354,7 +354,7 @@ export async function updateVariant(
   updates: Partial<{
     name: string
     description: string
-    priceAdjustment: number
+    price: number
     stockType: 'unlimited' | 'limited'
     stockQuantity: number | null
     available: boolean
@@ -381,7 +381,7 @@ export async function updateVariant(
   const updateData: ProductVariantUpdate = {}
   if (updates.name !== undefined) updateData.name = updates.name
   if (updates.description !== undefined) updateData.description = updates.description
-  if (updates.priceAdjustment !== undefined) updateData.price_adjustment = updates.priceAdjustment
+  if (updates.price !== undefined) updateData.price = updates.price
   if (updates.stockType !== undefined) updateData.stock_type = updates.stockType
   if (updates.stockQuantity !== undefined) updateData.stock_quantity = updates.stockQuantity
   if (updates.available !== undefined) updateData.available = updates.available
@@ -449,7 +449,7 @@ export async function createVariant(
   options?: Partial<{
     name: string
     description: string | null
-    priceAdjustment: number
+    price: number
     stockType: 'unlimited' | 'limited'
     stockQuantity: number | null
     images: File[]
@@ -475,10 +475,19 @@ export async function createVariant(
 
   const name = options?.name || 'New variant'
   const description = options?.description ?? null
-  const priceAdjustment = options?.priceAdjustment ?? 0
   const stockType = options?.stockType ?? 'unlimited'
   const stockQuantity = options?.stockQuantity ?? null
   const images = options?.images ?? []
+
+  // Get base product price to use as default if price not provided
+  const { data: product } = await supabase
+    .from('products')
+    .select('price')
+    .eq('id', productId)
+    .single()
+
+  const basePrice = (product as { price: number } | null)?.price ?? 0
+  const price = options?.price ?? basePrice
 
   const slug = await generateUniqueVariantSlug(productId, name, supabase)
 
@@ -487,7 +496,7 @@ export async function createVariant(
     name,
     slug,
     description,
-    price_adjustment: priceAdjustment,
+    price,
     stock_type: stockType,
     stock_quantity: stockQuantity,
     available: true,

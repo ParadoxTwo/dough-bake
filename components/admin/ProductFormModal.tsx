@@ -17,7 +17,7 @@ interface ProductFormModalProps {
 const initialVariant: VariantFormData = {
   name: '',
   description: '',
-  priceAdjustment: 0,
+  price: 0,
   stockType: 'unlimited',
   stockQuantity: null,
   images: [],
@@ -60,7 +60,10 @@ export default function ProductFormModal({
   }
 
   const addVariant = () => {
-    updateField('variants', [...formData.variants, { ...initialVariant }])
+    updateField('variants', [
+      ...formData.variants,
+      { ...initialVariant, price: formData.price }
+    ])
   }
 
   const updateVariant = (index: number, variant: VariantFormData) => {

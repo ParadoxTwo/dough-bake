@@ -58,11 +58,11 @@ export default function VariantForm({
         />
 
         <Input
-          label="Price Adjustment ($)"
+          label="Price (INR)"
           type="number"
           step="0.01"
-          value={variant.priceAdjustment}
-          onChange={(e) => updateField('priceAdjustment', parseFloat(e.target.value) || 0)}
+          value={variant.price}
+          onChange={(e) => updateField('price', parseFloat(e.target.value) || 0)}
         />
       </div>
 

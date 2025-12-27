@@ -121,7 +121,7 @@ export interface Database {
           name: string
           slug: string
           description: string | null
-          price_adjustment: number
+          price: number
           stock_type: 'unlimited' | 'limited'
           stock_quantity: number | null
           available: boolean
@@ -134,7 +134,7 @@ export interface Database {
           name: string
           slug: string
           description?: string | null
-          price_adjustment?: number
+          price: number
           stock_type?: 'unlimited' | 'limited'
           stock_quantity?: number | null
           available?: boolean
@@ -147,7 +147,7 @@ export interface Database {
           name?: string
           slug?: string
           description?: string | null
-          price_adjustment?: number
+          price?: number
           stock_type?: 'unlimited' | 'limited'
           stock_quantity?: number | null
           available?: boolean

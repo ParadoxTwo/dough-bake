@@ -57,24 +57,24 @@ export default function EditableProductInfo({
   // Base product price in INR
   const basePrice = product.price
 
-  // Effective base price including selected variant adjustment (in INR)
-  const effectiveBasePrice = basePrice + (selectedVariant?.price_adjustment ?? 0)
+  // Use variant price if selected, otherwise use base product price
+  const effectivePrice = selectedVariant?.price ?? basePrice
 
   // Converted price for display (uses current currency)
-  const finalDisplayPrice = convertPrice(effectiveBasePrice)
+  const finalDisplayPrice = convertPrice(effectivePrice)
 
   const handleSave = async (field: string, value: string | number) => {
     try {
       const numericValue = typeof value === 'string' ? parseFloat(value) : value
 
-      // Special handling for price: update variant adjustment if a variant is selected,
+      // Special handling for price: update variant price if a variant is selected,
       // otherwise update the base product price.
       if (field === 'price') {
         const productId = product.id
 
         if (selectedVariant && selectedVariantId) {
           await updateVariant(productId, selectedVariantId, {
-            priceAdjustment: numericValue,
+            price: numericValue,
           })
         } else {
           await updateProduct(productId, {
@@ -168,14 +168,17 @@ export default function EditableProductInfo({
         {isAdmin ? (
           <div>
             <InlineEditable
-              value={selectedVariant ? (selectedVariant.price_adjustment ?? 0) : basePrice}
+              value={selectedVariant ? selectedVariant.price : basePrice}
               onSave={(value) => handleSave('price', value)}
               type="number"
               className="text-4xl font-bold block"
               displayFormatter={() => formatPrice(finalDisplayPrice)}
             />
             <span className="text-sm" style={{ color: 'var(--theme-text-secondary)' }}>
-              Base price in INR (₹{basePrice.toFixed(2)}) • Current selection price: {formatPrice(finalDisplayPrice)}
+              {selectedVariant 
+                ? `Variant price in INR (₹${selectedVariant.price.toFixed(2)}) • Display: ${formatPrice(finalDisplayPrice)}`
+                : `Base price in INR (₹${basePrice.toFixed(2)}) • Display: ${formatPrice(finalDisplayPrice)}`
+              }
             </span>
           </div>
         ) : (

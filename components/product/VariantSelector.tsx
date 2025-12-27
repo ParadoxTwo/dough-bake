@@ -174,6 +174,7 @@ export default function VariantSelector({
               disabled={!isAvailable}
               className={baseClassName}
               style={baseStyle}
+              title={variant.description || variant.name}
             >
               {variant.name}
               {!isAvailable && (

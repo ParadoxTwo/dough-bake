@@ -28,7 +28,7 @@ export interface ProductFormData {
 export interface VariantFormData {
   name: string
   description: string
-  priceAdjustment: number
+  price: number
   stockType: 'unlimited' | 'limited'
   stockQuantity: number | null
   images: File[]

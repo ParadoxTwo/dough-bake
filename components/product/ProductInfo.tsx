@@ -34,12 +34,12 @@ export default function ProductInfo({
   const { formatPrice, convertPrice } = useCurrency()
   const variants = productWithDetails?.variants || []
 
-  // Calculate base price including selected variant adjustment (in INR)
+  // Use variant price if selected, otherwise use base product price
   const selectedVariant = variants.find((v) => v.id === selectedVariantId) || null
-  const basePriceWithVariant = product.price + (selectedVariant?.price_adjustment ?? 0)
+  const effectivePrice = selectedVariant?.price ?? product.price
 
   // Convert to current currency for display
-  const finalPrice = convertPrice(basePriceWithVariant)
+  const finalPrice = convertPrice(effectivePrice)
 
   return (
     <div>

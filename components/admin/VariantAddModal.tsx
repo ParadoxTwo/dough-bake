@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import ImageUpload from './ImageUpload'
 import type { VariantFormData } from '@/lib/types/variant'
-import { createVariant } from '@/lib/actions/product'
+import { createVariant, getProductById } from '@/lib/actions/product'
 
 interface VariantAddModalProps {
   isOpen: boolean
@@ -17,7 +17,7 @@ interface VariantAddModalProps {
 const initialVariant: VariantFormData = {
   name: '',
   description: '',
-  priceAdjustment: 0,
+  price: 0,
   stockType: 'unlimited',
   stockQuantity: null,
   images: [],
@@ -32,6 +32,23 @@ export default function VariantAddModal({
   const [formData, setFormData] = useState<VariantFormData>({ ...initialVariant })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [basePrice, setBasePrice] = useState<number | null>(null)
+
+  // Fetch base product price when modal opens
+  useEffect(() => {
+    if (isOpen && productId) {
+      getProductById(productId).then((product) => {
+        if (product) {
+          setBasePrice(product.price)
+          // Set default price to base price if not already set
+          setFormData(prev => ({
+            ...prev,
+            price: prev.price === 0 ? product.price : prev.price
+          }))
+        }
+      }).catch(console.error)
+    }
+  }, [isOpen, productId])
 
   if (!isOpen) return null
 
@@ -78,13 +95,13 @@ export default function VariantAddModal({
       const { id } = await createVariant(productId, {
         name: formData.name,
         description: formData.description || null,
-        priceAdjustment: formData.priceAdjustment,
+        price: formData.price,
         stockType: formData.stockType,
         stockQuantity: formData.stockQuantity,
         images: formData.images,
       })
 
-      setFormData({ ...initialVariant })
+      setFormData({ ...initialVariant, price: basePrice ?? 0 })
       onVariantCreated(id)
       onClose()
     } catch (error) {
@@ -97,6 +114,14 @@ export default function VariantAddModal({
       setSubmitting(false)
     }
   }
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({ ...initialVariant, price: basePrice ?? 0 })
+      setErrors({})
+    }
+  }, [isOpen, basePrice])
 
   return (
     <div
@@ -136,11 +161,12 @@ export default function VariantAddModal({
               />
 
               <Input
-                label="Price Adjustment"
+                label="Price (INR)"
                 type="number"
                 step="0.01"
-                value={formData.priceAdjustment}
-                onChange={(e) => updateField('priceAdjustment', parseFloat(e.target.value) || 0)}
+                value={formData.price}
+                onChange={(e) => updateField('price', parseFloat(e.target.value) || 0)}
+                placeholder={basePrice ? `Default: ₹${basePrice.toFixed(2)}` : undefined}
               />
             </div>
 

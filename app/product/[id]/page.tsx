@@ -111,7 +111,7 @@ export default function ProductPage() {
     const selectedVariant = productWithDetails?.variants?.find(v => v.id === selectedVariantId) || null;
     
     const finalPrice = selectedVariant
-      ? baseProduct.price + selectedVariant.price_adjustment
+      ? selectedVariant.price
       : baseProduct.price;
     
     const itemName = selectedVariant

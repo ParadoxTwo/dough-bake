@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     for (let v = 0; v < variantCount; v++) {
       const variantName = formData.get(`variants[${v}][name]`) as string
       const variantDescription = formData.get(`variants[${v}][description]`) as string
-      const priceAdjustment = parseFloat(formData.get(`variants[${v}][priceAdjustment]`) as string || '0')
+      const variantPrice = parseFloat(formData.get(`variants[${v}][price]`) as string || price.toString())
       const variantStockType = formData.get(`variants[${v}][stockType]`) as 'unlimited' | 'limited'
       const variantStockQuantity = formData.get(`variants[${v}][stockQuantity]`)
         ? parseInt(formData.get(`variants[${v}][stockQuantity]`) as string)
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
         name: variantName,
         slug: variantSlug,
         description: variantDescription || null,
-        price_adjustment: priceAdjustment,
+        price: variantPrice,
         stock_type: variantStockType,
         stock_quantity: variantStockQuantity,
         available: true,
