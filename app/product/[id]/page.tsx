@@ -142,13 +142,18 @@ export default function ProductPage() {
     router.push("/cart");
   };
 
-  const handleImageUpdate = async () => {
-    // Refresh product data after image update
+  const handleProductUpdate = async () => {
+    // Refresh product data after any update
     if (!params.id || typeof params.id !== 'string') return;
     const data = await getProductWithDetails(params.id);
     if (data) {
       setProduct(data);
     }
+  };
+
+  const handleImageUpdate = async () => {
+    // Refresh product data after image update
+    await handleProductUpdate();
   };
 
   if (loading) {
@@ -200,6 +205,7 @@ export default function ProductPage() {
             onQuantityChange={setQuantity}
             onAddToCart={handleAddToCart}
             addingToCart={addingToCart}
+            onProductUpdate={handleProductUpdate}
           />
         ) : (
           <ProductInfo

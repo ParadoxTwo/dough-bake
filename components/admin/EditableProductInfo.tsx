@@ -22,6 +22,7 @@ interface EditableProductInfoProps {
   onQuantityChange: (quantity: number) => void
   onAddToCart: () => void
   addingToCart: boolean
+  onProductUpdate?: () => Promise<void>
 }
 
 export default function EditableProductInfo({
@@ -32,6 +33,7 @@ export default function EditableProductInfo({
   onQuantityChange,
   onAddToCart,
   addingToCart,
+  onProductUpdate,
 }: EditableProductInfoProps) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -87,7 +89,12 @@ export default function EditableProductInfo({
         await updateProduct(productId, updates)
       }
 
-      router.refresh()
+      // Refresh the product data in the parent component
+      if (onProductUpdate) {
+        await onProductUpdate()
+      } else {
+        router.refresh()
+      }
     } catch (error) {
       throw error
     }
@@ -153,6 +160,7 @@ export default function EditableProductInfo({
           onVariantSelect={onVariantSelect}
           isAdmin={isAdmin}
           productId={product.id}
+          onVariantUpdate={onProductUpdate}
         />
       )}
 

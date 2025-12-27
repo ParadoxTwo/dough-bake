@@ -13,6 +13,7 @@ interface VariantSelectorProps {
   onVariantSelect: (variantId: string | null) => void
   isAdmin?: boolean
   productId: string
+  onVariantUpdate?: () => Promise<void>
 }
 
 export default function VariantSelector({
@@ -21,6 +22,7 @@ export default function VariantSelector({
   onVariantSelect,
   isAdmin = false,
   productId,
+  onVariantUpdate,
 }: VariantSelectorProps) {
   const router = useRouter()
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null)
@@ -36,7 +38,12 @@ export default function VariantSelector({
         await updateVariant(productId, variantId, { name: value as string })
       }
 
-      router.refresh()
+      // Refresh the product data in the parent component
+      if (onVariantUpdate) {
+        await onVariantUpdate()
+      } else {
+        router.refresh()
+      }
     } catch (error) {
       console.error('Failed to update variant:', error)
     }
@@ -137,7 +144,12 @@ export default function VariantSelector({
                             onVariantSelect(null)
                           }
                           setEditingVariantId(null)
-                          router.refresh()
+                          // Refresh the product data in the parent component
+                          if (onVariantUpdate) {
+                            await onVariantUpdate()
+                          } else {
+                            router.refresh()
+                          }
                         } catch (error) {
                           console.error('Failed to delete variant:', error)
                         }
@@ -188,10 +200,15 @@ export default function VariantSelector({
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           productId={productId}
-          onVariantCreated={(variantId) => {
+          onVariantCreated={async (variantId) => {
             onVariantSelect(variantId)
             setIsAddModalOpen(false)
-            router.refresh()
+            // Refresh the product data in the parent component
+            if (onVariantUpdate) {
+              await onVariantUpdate()
+            } else {
+              router.refresh()
+            }
           }}
         />
       )}
