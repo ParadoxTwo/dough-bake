@@ -8,6 +8,7 @@ import { getThemeSettings } from "@/lib/actions/theme";
 import { themes } from "@/lib/theme/types";
 import { CurrencyProvider } from "@/lib/currency/context";
 import { getCurrencySettings } from "@/lib/actions/currency";
+import NavigationTracker from "@/components/NavigationTracker";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -66,6 +67,7 @@ export default async function RootLayout({
             initialExchangeRates={currencySettings?.exchangeRates || {}}
             skipClientFetch={true}
           >
+            <NavigationTracker />
             <Navbar />
             <main className="flex-1">
               {children}

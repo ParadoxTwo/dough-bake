@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { getProductWithDetails, getProductById } from "@/lib/actions/product";
 import { getCurrentUserProfile } from "@/lib/actions/user";
 import { Product } from "@/lib/types/product";
 import { ProductWithVariants } from "@/lib/types/variant";
 import { addToCart, CartItem } from "@/lib/utils/cart";
+import { getPreviousRoute } from "@/lib/utils/navigation";
 import PageContainer from "@/components/layout/PageContainer";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
@@ -15,15 +16,62 @@ import ProductInfo from "@/components/product/ProductInfo";
 import EditableProductInfo from "@/components/admin/EditableProductInfo";
 import EditableImageGallery from "@/components/admin/EditableImageGallery";
 
+// Map routes to friendly labels
+const routeLabels: Record<string, string> = {
+  '/': 'Home',
+  '/menu': 'Menu',
+  '/cart': 'Cart',
+  '/checkout': 'Checkout',
+  '/admin': 'Admin',
+};
+
+function getBackLink(currentPathname: string): { label: string; href: string } {
+  if (typeof window === 'undefined') {
+    return { label: '← To Menu', href: '/menu' };
+  }
+
+  const previousRoute = getPreviousRoute(currentPathname);
+  
+  if (!previousRoute) {
+    return { label: '← To Menu', href: '/menu' };
+  }
+
+  // Check if it's a known route
+  const label = routeLabels[previousRoute];
+  if (label) {
+    return { label: `← Back to ${label}`, href: previousRoute };
+  }
+
+  // If it's a valid internal route but not in our map, use the pathname
+  // Extract the route name (e.g., '/auth/signin' -> 'Signin')
+  const pathParts = previousRoute.split('/').filter(Boolean);
+  if (pathParts.length > 0) {
+    const routeName = pathParts[pathParts.length - 1];
+    const capitalized = routeName.charAt(0).toUpperCase() + routeName.slice(1);
+    return { label: `← Back to ${capitalized}`, href: previousRoute };
+  }
+
+  return { label: '← To Menu', href: '/menu' };
+}
+
 export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const [product, setProduct] = useState<ProductWithVariants | Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [backLink, setBackLink] = useState<{ label: string; href: string }>({ label: '← To Menu', href: '/menu' });
+
+  useEffect(() => {
+    // Set back link based on navigation history
+    if (pathname) {
+      setBackLink(getBackLink(pathname));
+    }
+  }, [pathname]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,7 +176,7 @@ export default function ProductPage() {
     <PageContainer>
       <Breadcrumb
         items={[
-          { label: '← Back to Menu', href: '/menu' },
+          { label: backLink.label, href: backLink.href },
         ]}
       />
 

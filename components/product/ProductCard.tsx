@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ProductCardProps } from '@/lib/types/product'
 import { addToCart, CartItem } from '@/lib/utils/cart'
+import { isLocalSupabaseUrl } from '@/lib/utils/image-helpers'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { useCurrency } from '@/lib/currency/context'
@@ -69,6 +70,7 @@ export default function ProductCard({
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              unoptimized={isLocalSupabaseUrl(product.firstImage.medium_url)}
             />
           </div>
         ) : (

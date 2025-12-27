@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { CartItem } from '@/lib/utils/cart'
+import { isLocalSupabaseUrl } from '@/lib/utils/image-helpers'
 import Card from './Card'
 import Button from './Button'
 import ThemedText from './ThemedText'
@@ -38,6 +39,7 @@ export default function CartItemCard({
               fill
               className="object-cover"
               sizes="80px"
+              unoptimized={isLocalSupabaseUrl(item.imageUrl)}
             />
           </div>
         ) : (
