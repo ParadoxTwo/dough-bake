@@ -2,6 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { CurrencyCode, CurrencyMode, CurrencySettings } from '@/lib/currency/types'
+import type { Database } from '@/lib/types/database.types'
+
+type SiteSettingsInsert = Database['public']['Tables']['site_settings']['Insert']
 
 export async function getCurrencySettings(): Promise<CurrencySettings | null> {
   const supabase = await createClient()
@@ -13,6 +16,8 @@ export async function getCurrencySettings(): Promise<CurrencySettings | null> {
       .select('value')
       .eq('key', 'currency_mode')
       .single()
+    
+    const typedModeData = modeData as { value: string } | null
 
     // Get fixed currency
     const { data: fixedCurrencyData } = await supabase
@@ -20,6 +25,8 @@ export async function getCurrencySettings(): Promise<CurrencySettings | null> {
       .select('value')
       .eq('key', 'currency_fixed')
       .single()
+    
+    const typedFixedCurrencyData = fixedCurrencyData as { value: string } | null
 
     // Get exchange rates (stored as JSON)
     const { data: ratesData } = await supabase
@@ -27,6 +34,8 @@ export async function getCurrencySettings(): Promise<CurrencySettings | null> {
       .select('value')
       .eq('key', 'currency_exchange_rates')
       .single()
+    
+    const typedRatesData = ratesData as { value: string } | null
 
     // Get last updated timestamp
     const { data: lastUpdatedData } = await supabase
@@ -34,18 +43,20 @@ export async function getCurrencySettings(): Promise<CurrencySettings | null> {
       .select('value')
       .eq('key', 'currency_last_updated')
       .single()
+    
+    const typedLastUpdatedData = lastUpdatedData as { value: string } | null
 
-    const mode = (modeData?.value as CurrencyMode) || 'fixed'
-    const fixedCurrency = (fixedCurrencyData?.value as CurrencyCode) || 'INR'
+    const mode = (typedModeData?.value as CurrencyMode) || 'fixed'
+    const fixedCurrency = (typedFixedCurrencyData?.value as CurrencyCode) || 'INR'
     
     let exchangeRates: Record<string, number> = {}
     try {
-      exchangeRates = ratesData?.value ? JSON.parse(ratesData.value) : {}
+      exchangeRates = typedRatesData?.value ? JSON.parse(typedRatesData.value) : {}
     } catch (e) {
       console.error('Failed to parse exchange rates:', e)
     }
 
-    const lastUpdated = lastUpdatedData?.value || undefined
+    const lastUpdated = typedLastUpdatedData?.value || undefined
 
     return {
       mode,
@@ -78,24 +89,30 @@ export async function updateCurrencySettings(
       .select('role')
       .eq('id', user.id)
       .single()
+    
+    const typedProfile = profile as { role: 'customer' | 'admin' } | null
 
-    if (profile?.role !== 'admin') {
+    if (typedProfile?.role !== 'admin') {
       return { success: false, error: 'Admin access required' }
     }
 
     // Update currency mode
-    const { error: modeError } = await supabase
-      .from('site_settings')
-      .upsert(
-        {
-          key: 'currency_mode',
-          value: mode,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: 'key',
-        }
-      )
+    const modeInsert: SiteSettingsInsert = {
+      key: 'currency_mode',
+      value: mode,
+      updated_at: new Date().toISOString(),
+    }
+    
+    const siteSettingsQuery = supabase.from('site_settings') as unknown as {
+      upsert: (
+        values: SiteSettingsInsert,
+        options?: { onConflict?: string }
+      ) => Promise<{ error: { message: string } | null }>
+    }
+    
+    const { error: modeError } = await siteSettingsQuery.upsert(modeInsert, {
+      onConflict: 'key',
+    })
 
     if (modeError) {
       console.error('Failed to update currency_mode:', modeError)
@@ -104,18 +121,15 @@ export async function updateCurrencySettings(
 
     // Update fixed currency if provided
     if (fixedCurrency) {
-      const { error: fixedError } = await supabase
-        .from('site_settings')
-        .upsert(
-          {
-            key: 'currency_fixed',
-            value: fixedCurrency,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'key',
-          }
-        )
+      const fixedInsert: SiteSettingsInsert = {
+        key: 'currency_fixed',
+        value: fixedCurrency,
+        updated_at: new Date().toISOString(),
+      }
+      
+      const { error: fixedError } = await siteSettingsQuery.upsert(fixedInsert, {
+        onConflict: 'key',
+      })
 
       if (fixedError) {
         console.error('Failed to update currency_fixed:', fixedError)
@@ -125,18 +139,15 @@ export async function updateCurrencySettings(
 
     // Update exchange rates if provided
     if (exchangeRates) {
-      const { error: ratesError } = await supabase
-        .from('site_settings')
-        .upsert(
-          {
-            key: 'currency_exchange_rates',
-            value: JSON.stringify(exchangeRates),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'key',
-          }
-        )
+      const ratesInsert: SiteSettingsInsert = {
+        key: 'currency_exchange_rates',
+        value: JSON.stringify(exchangeRates),
+        updated_at: new Date().toISOString(),
+      }
+      
+      const { error: ratesError } = await siteSettingsQuery.upsert(ratesInsert, {
+        onConflict: 'key',
+      })
 
       if (ratesError) {
         console.error('Failed to update currency_exchange_rates:', ratesError)
@@ -144,18 +155,15 @@ export async function updateCurrencySettings(
       }
 
       // Update last updated timestamp
-      const { error: updatedError } = await supabase
-        .from('site_settings')
-        .upsert(
-          {
-            key: 'currency_last_updated',
-            value: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'key',
-          }
-        )
+      const lastUpdatedInsert: SiteSettingsInsert = {
+        key: 'currency_last_updated',
+        value: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      
+      const { error: updatedError } = await siteSettingsQuery.upsert(lastUpdatedInsert, {
+        onConflict: 'key',
+      })
 
       if (updatedError) {
         console.error('Failed to update currency_last_updated:', updatedError)

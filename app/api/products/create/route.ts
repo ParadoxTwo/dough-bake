@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { generateUniqueProductSlug, generateUniqueVariantSlug } from '@/lib/utils/slug'
 import { uploadProductImage, saveProductImage } from '@/lib/utils/images'
 import { NextResponse } from 'next/server'
+import type { Database } from '@/lib/types/database.types'
+
+type ProductInsert = Database['public']['Tables']['products']['Insert']
+type ProductVariantInsert = Database['public']['Tables']['product_variants']['Insert']
 
 // Increase body size limit for image uploads
 export const runtime = 'nodejs'
@@ -22,8 +26,10 @@ export async function POST(request: Request) {
       .select('role')
       .eq('id', user.id)
       .single()
+    
+    const typedProfile = profile as { role: 'customer' | 'admin' } | null
 
-    if (profile?.role !== 'admin') {
+    if (typedProfile?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 })
     }
 
@@ -52,24 +58,37 @@ export async function POST(request: Request) {
     const productSlug = await generateUniqueProductSlug(name, supabase)
 
     // Create product
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .insert({
-        name,
-        description: description || null,
-        price,
-        category: category || null,
-        stock_type: stockType,
-        stock_quantity: stockQuantity,
-        slug: productSlug,
-        available: true,
-      })
+    const productInsert: ProductInsert = {
+      name,
+      description: description || null,
+      price,
+      category: category || null,
+      stock_type: stockType,
+      stock_quantity: stockQuantity,
+      slug: productSlug,
+      available: true,
+    }
+
+    // Type assertion needed because Supabase's type inference doesn't always work correctly
+    const productsQuery = supabase.from('products') as unknown as {
+      insert: (values: ProductInsert) => {
+        select: (columns: string) => {
+          single: () => Promise<{ data: { id: string } | null; error: { message: string } | null }>
+        }
+      }
+    }
+    const insertResult = await productsQuery
+      .insert(productInsert)
       .select('id')
       .single()
+    
+    type ProductIdResult = { id: string }
+    const product = insertResult.data as ProductIdResult | null
+    const productError = insertResult.error
 
     if (productError || !product) {
       return NextResponse.json(
-        { error: `Failed to create product: ${productError?.message}` },
+        { error: `Failed to create product: ${productError?.message || 'Unknown error'}` },
         { status: 500 }
       )
     }
@@ -105,23 +124,36 @@ export async function POST(request: Request) {
 
       const variantSlug = await generateUniqueVariantSlug(product.id, variantName, supabase)
 
-      const { data: variant, error: variantError } = await supabase
-        .from('product_variants')
-        .insert({
-          product_id: product.id,
-          name: variantName,
-          slug: variantSlug,
-          description: variantDescription || null,
-          price_adjustment: priceAdjustment,
-          stock_type: variantStockType,
-          stock_quantity: variantStockQuantity,
-          available: true,
-        })
+      const variantInsert: ProductVariantInsert = {
+        product_id: product.id,
+        name: variantName,
+        slug: variantSlug,
+        description: variantDescription || null,
+        price_adjustment: priceAdjustment,
+        stock_type: variantStockType,
+        stock_quantity: variantStockQuantity,
+        available: true,
+      }
+
+      // Type assertion needed because Supabase's type inference doesn't always work correctly
+      const variantsQuery = supabase.from('product_variants') as unknown as {
+        insert: (values: ProductVariantInsert) => {
+          select: (columns: string) => {
+            single: () => Promise<{ data: { id: string } | null; error: { message: string } | null }>
+          }
+        }
+      }
+      const variantInsertResult = await variantsQuery
+        .insert(variantInsert)
         .select('id')
         .single()
+      
+      type VariantIdResult = { id: string }
+      const variant = variantInsertResult.data as VariantIdResult | null
+      const variantError = variantInsertResult.error
 
       if (variantError || !variant) {
-        console.error(`Failed to create variant: ${variantError?.message}`)
+        console.error(`Failed to create variant: ${variantError?.message || 'Unknown error'}`)
         continue
       }
 

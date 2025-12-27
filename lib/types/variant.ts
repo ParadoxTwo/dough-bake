@@ -3,12 +3,13 @@ import { Database } from './database.types'
 export type ProductVariant = Database['public']['Tables']['product_variants']['Row']
 export type ProductImage = Database['public']['Tables']['product_images']['Row']
 export type JobQueue = Database['public']['Tables']['job_queue']['Row']
+export type Product = Database['public']['Tables']['products']['Row']
 
 export interface ProductVariantWithImages extends ProductVariant {
   images: ProductImage[]
 }
 
-export interface ProductWithVariants extends Database['public']['Tables']['products']['Row'] {
+export interface ProductWithVariants extends Product {
   variants?: ProductVariantWithImages[]
   images?: ProductImage[]
 }

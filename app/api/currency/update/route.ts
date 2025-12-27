@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { updateCurrencySettings } from '@/lib/actions/currency'
+import type { CurrencyMode, CurrencyCode } from '@/lib/currency/types'
 
 export async function POST(request: Request) {
   try {
@@ -18,8 +19,8 @@ export async function POST(request: Request) {
     }
 
     const result = await updateCurrencySettings(
-      mode as any,
-      fixedCurrency as any,
+      mode as CurrencyMode,
+      fixedCurrency as CurrencyCode | undefined,
       exchangeRates
     )
 

@@ -1,4 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/lib/types/database.types'
+
+type ProductImageInsert = Database['public']['Tables']['product_images']['Insert']
 
 export interface ImageSize {
   width: number
@@ -101,26 +104,35 @@ export async function saveProductImage(
 ): Promise<string> {
   const supabase = await createClient()
   
-  const { data, error } = await supabase
-    .from('product_images')
-    .insert({
-      product_id: productId,
-      variant_id: variantId,
-      storage_path: imageData.storagePath,
-      original_url: imageData.originalUrl,
-      large_url: imageData.largeUrl,
-      medium_url: imageData.mediumUrl,
-      small_url: imageData.smallUrl,
-      og_url: imageData.ogUrl,
-      thumbnail_url: imageData.thumbnailUrl,
-      alt_text: altText,
-      display_order: displayOrder,
-    })
+  const imageInsert: ProductImageInsert = {
+    product_id: productId,
+    variant_id: variantId,
+    storage_path: imageData.storagePath,
+    original_url: imageData.originalUrl,
+    large_url: imageData.largeUrl,
+    medium_url: imageData.mediumUrl,
+    small_url: imageData.smallUrl,
+    og_url: imageData.ogUrl,
+    thumbnail_url: imageData.thumbnailUrl,
+    alt_text: altText,
+    display_order: displayOrder,
+  }
+  
+  const imagesQuery = supabase.from('product_images') as unknown as {
+    insert: (values: ProductImageInsert) => {
+      select: (columns: string) => {
+        single: () => Promise<{ data: { id: string } | null; error: { message: string } | null }>
+      }
+    }
+  }
+  
+  const { data, error } = await imagesQuery
+    .insert(imageInsert)
     .select('id')
     .single()
   
-  if (error) {
-    throw new Error(`Failed to save image metadata: ${error.message}`)
+  if (error || !data) {
+    throw new Error(`Failed to save image metadata: ${error?.message || 'Unknown error'}`)
   }
   
   return data.id
@@ -139,14 +151,16 @@ export async function deleteProductImage(imageId: string): Promise<void> {
     .eq('id', imageId)
     .single()
   
-  if (fetchError || !image) {
+  const typedImage = image as { storage_path: string } | null
+  
+  if (fetchError || !typedImage) {
     throw new Error(`Failed to find image: ${fetchError?.message || 'Image not found'}`)
   }
   
   // Delete from storage
   const { error: deleteError } = await supabase.storage
     .from('products')
-    .remove([image.storage_path])
+    .remove([typedImage.storage_path])
   
   if (deleteError) {
     console.error('Failed to delete image from storage:', deleteError)

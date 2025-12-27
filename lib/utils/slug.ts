@@ -42,7 +42,8 @@ export async function generateUniqueProductSlug(
       .select('id')
       .eq('slug', slug)
       .single()
-    return !!data
+    const typedData = data as { id: string } | null
+    return !!typedData
   })
 }
 
@@ -61,7 +62,8 @@ export async function generateUniqueVariantSlug(
       .eq('product_id', productId)
       .eq('slug', slug)
       .single()
-    return !!data
+    const typedData = data as { id: string } | null
+    return !!typedData
   })
 }
 

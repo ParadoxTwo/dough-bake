@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { ThemePreset } from '@/lib/theme/types'
 import type { Database } from '@/lib/types/database.types'
 
+type SiteSettingsInsert = Database['public']['Tables']['site_settings']['Insert']
+
 /**
  * Get theme settings from database
  */
@@ -75,11 +77,22 @@ export async function updateTheme(theme: ThemePreset) {
   }
 
   // Update or insert theme setting
-  const { error } = await (supabase
-    .from('site_settings') as any).upsert(
-    { key: 'theme', value: theme },
-    { onConflict: 'key' }
-  )
+  const themeInsert: SiteSettingsInsert = {
+    key: 'theme',
+    value: theme,
+    updated_at: new Date().toISOString(),
+  }
+  
+  const siteSettingsQuery = supabase.from('site_settings') as unknown as {
+    upsert: (
+      values: SiteSettingsInsert,
+      options?: { onConflict?: string }
+    ) => Promise<{ error: { message: string } | null }>
+  }
+  
+  const { error } = await siteSettingsQuery.upsert(themeInsert, {
+    onConflict: 'key',
+  })
 
   if (error) {
     throw new Error(`Failed to update theme: ${error.message}`)
@@ -119,11 +132,22 @@ export async function updateLogoFilter(apply: boolean) {
   }
 
   // Update or insert logo filter setting
-  const { error } = await (supabase
-    .from('site_settings') as any).upsert(
-    { key: 'apply_logo_filter', value: apply.toString() },
-    { onConflict: 'key' }
-  )
+  const logoFilterInsert: SiteSettingsInsert = {
+    key: 'apply_logo_filter',
+    value: apply.toString(),
+    updated_at: new Date().toISOString(),
+  }
+  
+  const siteSettingsQuery2 = supabase.from('site_settings') as unknown as {
+    upsert: (
+      values: SiteSettingsInsert,
+      options?: { onConflict?: string }
+    ) => Promise<{ error: { message: string } | null }>
+  }
+  
+  const { error } = await siteSettingsQuery2.upsert(logoFilterInsert, {
+    onConflict: 'key',
+  })
 
   if (error) {
     throw new Error(`Failed to update logo filter setting: ${error.message}`)

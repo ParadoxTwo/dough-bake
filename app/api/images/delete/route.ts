@@ -17,8 +17,10 @@ export async function DELETE(request: Request) {
       .select('role')
       .eq('id', user.id)
       .single()
+    
+    const typedProfile = profile as { role: 'customer' | 'admin' } | null
 
-    if (profile?.role !== 'admin') {
+    if (typedProfile?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 })
     }
 

@@ -5,8 +5,13 @@
  * Usage: node scripts/seed-admin-user-production.js
  * 
  * Requires environment variables:
- * - SUPABASE_URL (your production Supabase URL)
+ * - SUPABASE_URL (your production Supabase URL) or NEXT_PUBLIC_SUPABASE_URL
  * - SUPABASE_SERVICE_ROLE_KEY (your production service role key)
+ * 
+ * Optional environment variables:
+ * - ADMIN_EMAIL (default: winbro2.ej@gmail.com)
+ * - ADMIN_PASSWORD (default: Winbro2@admin)
+ * - ADMIN_NAME (default: Edwin John)
  */
 
 const https = require('https');
@@ -22,9 +27,9 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
   process.exit(1);
 }
 
-const ADMIN_EMAIL = 'winbro2.ej@gmail.com';
-const ADMIN_PASSWORD = 'Winbro2@admin';
-const ADMIN_NAME = 'Edwin John';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'winbro2.ej@gmail.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Winbro2@admin';
+const ADMIN_NAME = process.env.ADMIN_NAME || 'Edwin John';
 
 async function makeRequest(url, options, data) {
   return new Promise((resolve, reject) => {
@@ -110,42 +115,79 @@ async function createAdminUser() {
       }
     }
 
-    // Update profile and customer record using SQL
+    // Update profile to admin using REST API
     console.log('\n👤 Updating profile to admin role...');
-    
-    // Use Supabase REST API to execute SQL
-    const sqlResponse = await makeRequest(
-      `${SUPABASE_URL}/rest/v1/rpc/exec_sql`,
+    const updateProfileResponse = await makeRequest(
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`,
       {
-        method: 'POST',
+        method: 'PATCH',
+        headers: {
+          'Prefer': 'return=representation',
+        },
       },
       {
-        query: `
-          UPDATE public.profiles
-          SET role = 'admin'
-          WHERE id = '${userId}';
-
-          INSERT INTO public.customers (user_id, name)
-          VALUES ('${userId}', '${ADMIN_NAME}')
-          ON CONFLICT (user_id) DO UPDATE SET name = '${ADMIN_NAME}';
-        `,
+        role: 'admin',
       }
     );
 
-    // Alternative: Use direct SQL endpoint if available
-    // Or we can use the Supabase client
-    console.log('✅ Profile and customer record updated');
+    if (updateProfileResponse.status === 200 || updateProfileResponse.status === 204) {
+      console.log('✅ Profile updated to admin');
+    } else {
+      console.warn('⚠️  Could not update profile via REST API. Status:', updateProfileResponse.status);
+    }
+
+    // Create or update customer record
+    console.log('👤 Creating/updating customer record...');
+    const customerResponse = await makeRequest(
+      `${SUPABASE_URL}/rest/v1/customers`,
+      {
+        method: 'POST',
+        headers: {
+          'Prefer': 'resolution=merge-duplicates',
+        },
+      },
+      {
+        user_id: userId,
+        name: ADMIN_NAME,
+      }
+    );
+
+    if (customerResponse.status === 201 || customerResponse.status === 200) {
+      console.log('✅ Customer record created/updated');
+    } else {
+      console.warn('⚠️  Could not create customer record. Status:', customerResponse.status);
+      // Try update if insert failed
+      const updateCustomerResponse = await makeRequest(
+        `${SUPABASE_URL}/rest/v1/customers?user_id=eq.${userId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Prefer': 'return=representation',
+          },
+        },
+        {
+          name: ADMIN_NAME,
+        }
+      );
+      if (updateCustomerResponse.status === 200) {
+        console.log('✅ Customer record updated');
+      }
+    }
+
     console.log('\n🎉 Admin user setup complete!');
     console.log('\n📋 Login credentials:');
     console.log(`   Email: ${ADMIN_EMAIL}`);
     console.log(`   Password: ${ADMIN_PASSWORD}`);
+    console.log('\n💡 If profile update failed, run this SQL in Supabase Dashboard:');
+    console.log(`   UPDATE public.profiles SET role = 'admin' WHERE id = '${userId}';`);
   } catch (error) {
     console.error('❌ Error:', error.message);
     console.error('\n💡 Alternative: Create the user manually in Supabase Dashboard:');
     console.error('   1. Go to Authentication > Users');
     console.error('   2. Click "Add User"');
     console.error('   3. Enter email and password');
-    console.error('   4. Then run this SQL in the SQL Editor:');
+    console.error('   4. Check "Auto Confirm User"');
+    console.error('   5. Then run this SQL in the SQL Editor:');
     console.error(`      UPDATE public.profiles SET role = 'admin' WHERE email = '${ADMIN_EMAIL}';`);
     console.error(`      INSERT INTO public.customers (user_id, name) SELECT id, '${ADMIN_NAME}' FROM public.profiles WHERE email = '${ADMIN_EMAIL}' ON CONFLICT (user_id) DO UPDATE SET name = '${ADMIN_NAME}';`);
     process.exit(1);
@@ -153,4 +195,3 @@ async function createAdminUser() {
 }
 
 createAdminUser();
-

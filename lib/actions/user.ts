@@ -35,6 +35,8 @@ export async function getCurrentUserProfile(): Promise<{
     .select('id, email, role')
     .eq('id', user.id)
     .maybeSingle()
+  
+  const typedProfile = profile as { id: string; email: string; role: 'customer' | 'admin' } | null
 
   if (profileError) {
     console.error('Error fetching profile:', profileError)
@@ -48,12 +50,12 @@ export async function getCurrentUserProfile(): Promise<{
 
   return {
     user: { id: user.id, email: user.email },
-    profile: profile ? {
-      id: profile.id,
-      email: profile.email,
-      role: profile.role as 'customer' | 'admin',
+    profile: typedProfile ? {
+      id: typedProfile.id,
+      email: typedProfile.email,
+      role: typedProfile.role as 'customer' | 'admin',
     } : null,
-    isAdmin: profile?.role === 'admin',
+    isAdmin: typedProfile?.role === 'admin',
   }
 }
 

@@ -6,7 +6,15 @@ The admin user is automatically created in local development via migration `003_
 
 ### Option 1: Using the Production Script (Recommended)
 
-Run the production seed script with your production credentials:
+**From your local machine or CI/CD:**
+
+```bash
+SUPABASE_URL=https://your-project.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key \
+node scripts/seed-admin-user-production.js
+```
+
+Or use the npm script:
 
 ```bash
 SUPABASE_URL=https://your-project.supabase.co \
@@ -14,13 +22,23 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key \
 npm run supabase:seed-admin:prod
 ```
 
-Or use the Node.js version:
+**Custom credentials (optional):**
 
 ```bash
 SUPABASE_URL=https://your-project.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key \
+ADMIN_EMAIL=your-email@example.com \
+ADMIN_PASSWORD=YourSecurePassword123! \
+ADMIN_NAME="Your Name" \
 node scripts/seed-admin-user-production.js
 ```
+
+**Getting your credentials:**
+
+1. Go to your Supabase project dashboard
+2. Navigate to **Settings** > **API**
+3. Copy the **Project URL** (for `SUPABASE_URL`)
+4. Copy the **service_role** key (for `SUPABASE_SERVICE_ROLE_KEY`) - ⚠️ Keep this secret!
 
 ### Option 2: Manual Creation via Supabase Dashboard
 

@@ -48,13 +48,12 @@ export default function EditableProductInfo({
 
   const { formatPrice, convertPrice } = useCurrency()
   
-  // ProductWithVariants extends products Row, so it has all product properties
-  const baseProduct = product as any
+  // ProductWithVariants extends Product, so it has all product properties
   const variants = product.variants || []
   const selectedVariant = variants.find((v) => v.id === selectedVariantId) || null
 
   // Base product price in INR
-  const basePrice = baseProduct.price as number
+  const basePrice = product.price
 
   // Effective base price including selected variant adjustment (in INR)
   const effectiveBasePrice = basePrice + (selectedVariant?.price_adjustment ?? 0)
@@ -69,7 +68,7 @@ export default function EditableProductInfo({
       // Special handling for price: update variant adjustment if a variant is selected,
       // otherwise update the base product price.
       if (field === 'price') {
-        const productId = baseProduct.id as string
+        const productId = product.id
 
         if (selectedVariant && selectedVariantId) {
           await updateVariant(productId, selectedVariantId, {
@@ -83,8 +82,8 @@ export default function EditableProductInfo({
       } else {
         const updates: any = {}
         updates[field] = value
-        // ProductWithVariants extends products Row, so it has id
-        const productId = baseProduct.id as string
+        // ProductWithVariants extends Product, so it has id
+        const productId = product.id
         await updateProduct(productId, updates)
       }
 
@@ -100,16 +99,16 @@ export default function EditableProductInfo({
 
   return (
     <div>
-      {baseProduct.category && (
+      {product.category && (
         <div className="mb-4">
           {isAdmin ? (
             <InlineEditable
-              value={baseProduct.category}
+              value={product.category}
               onSave={(value) => handleSave('category', value)}
               className="inline-block"
             />
           ) : (
-            <Badge>{baseProduct.category}</Badge>
+            <Badge>{product.category}</Badge>
           )}
         </div>
       )}
@@ -117,31 +116,31 @@ export default function EditableProductInfo({
       <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--theme-text)' }}>
         {isAdmin ? (
           <InlineEditable
-            value={baseProduct.name}
+            value={product.name}
             onSave={(value) => handleSave('name', value)}
             className="block"
           />
         ) : (
-          baseProduct.name
+          product.name
         )}
       </h1>
       
       <div className="mb-6">
         {isAdmin ? (
           <InlineEditable
-            value={baseProduct.description || ''}
+            value={product.description || ''}
             onSave={(value) => handleSave('description', value)}
             multiline
             rows={4}
             className="block"
           />
         ) : (
-          baseProduct.description && (
+          product.description && (
             <p 
               className="text-lg"
               style={{ color: 'var(--theme-text-secondary)' }}
             >
-              {baseProduct.description}
+              {product.description}
             </p>
           )
         )}
@@ -153,7 +152,7 @@ export default function EditableProductInfo({
           selectedVariantId={selectedVariantId || null}
           onVariantSelect={onVariantSelect}
           isAdmin={isAdmin}
-          productId={baseProduct.id as string}
+          productId={product.id}
         />
       )}
 
@@ -181,7 +180,7 @@ export default function EditableProductInfo({
         )}
       </div>
 
-      {baseProduct.available ? (
+      {product.available ? (
         <div className="space-y-6">
           <QuantitySelector
             quantity={quantity}

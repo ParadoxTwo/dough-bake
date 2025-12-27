@@ -37,8 +37,10 @@ export const getContent = cache(async (key: string): Promise<string> => {
       .select("value")
       .eq("key", key)
       .single();
+    
+    const typedData = data as { value: string } | null
 
-    if (error || !data) {
+    if (error || !typedData) {
       // If DB call fails, try to use cache even if expired
       if (cached) {
         return cached.value;
@@ -48,8 +50,8 @@ export const getContent = cache(async (key: string): Promise<string> => {
     }
 
     // Update cache
-    contentCache.set(key, { value: data.value, timestamp: Date.now() });
-    return data.value;
+    contentCache.set(key, { value: typedData.value, timestamp: Date.now() });
+    return typedData.value;
   } catch (error) {
     // On error, try cache first, then fallback
     if (cached) {
@@ -87,10 +89,12 @@ export const getContentBatch = cache(async (keys: string[]): Promise<Record<stri
       .from("content_items")
       .select("key, value")
       .in("key", keysToFetch);
+    
+    const typedData = data as Array<{ key: string; value: string }> | null
 
-    if (!error && data) {
+    if (!error && typedData) {
       // Update cache and result
-      for (const item of data) {
+      for (const item of typedData) {
         contentCache.set(item.key, { value: item.value, timestamp: Date.now() });
         result[item.key] = item.value;
       }

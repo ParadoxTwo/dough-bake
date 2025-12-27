@@ -28,12 +28,14 @@ export async function getProductById(id: string): Promise<Product | null> {
     .select('*')
     .eq('id', id)
     .single()
+  
+  const typedData = data as ProductRow | null
 
-  if (error || !data) {
+  if (error || !typedData) {
     return null
   }
 
-  return data
+  return typedData
 }
 
 /**
@@ -93,8 +95,10 @@ export async function getProductWithDetails(id: string): Promise<ProductWithVari
     .select('*')
     .eq('id', id)
     .single()
+  
+  const typedProduct = product as ProductRow | null
 
-  if (productError || !product) {
+  if (productError || !typedProduct) {
     return null
   }
 
@@ -133,7 +137,7 @@ export async function getProductWithDetails(id: string): Promise<ProductWithVari
   }))
 
   const productWithDetails: ProductWithVariants = {
-    ...(product as ProductRow),
+    ...typedProduct,
     variants: variantsWithImages,
     images: typedProductImages,
   }

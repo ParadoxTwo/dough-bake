@@ -70,8 +70,10 @@ export async function updateSession(request: NextRequest) {
       .select('role')
       .eq('id', user.id)
       .single()
+    
+    const typedProfile = profile as { role: 'customer' | 'admin' } | null
 
-    if (profile?.role !== 'admin') {
+    if (typedProfile?.role !== 'admin') {
       // Redirect if not admin
       return NextResponse.redirect(new URL('/', request.url))
     }
