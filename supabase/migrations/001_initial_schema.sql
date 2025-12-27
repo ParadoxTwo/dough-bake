@@ -1,5 +1,5 @@
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Note: Supabase uses gen_random_uuid() from pgcrypto extension (enabled by default)
+-- No need to enable uuid-ossp extension
 
 -- Create profiles table
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 -- Create customers table (additional customer information)
 CREATE TABLE IF NOT EXISTS public.customers (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL UNIQUE,
     name TEXT NOT NULL,
     phone TEXT,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS public.customers (
 
 -- Create products table
 CREATE TABLE IF NOT EXISTS public.products (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS public.products (
 
 -- Create orders table
 CREATE TABLE IF NOT EXISTS public.orders (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE NOT NULL,
     total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
     status TEXT DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'processing', 'completed', 'cancelled')),
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
 
 -- Create order_items table
 CREATE TABLE IF NOT EXISTS public.order_items (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE NOT NULL,
     product_id UUID REFERENCES public.products(id) ON DELETE RESTRICT NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),

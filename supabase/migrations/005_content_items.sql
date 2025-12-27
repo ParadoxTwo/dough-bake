@@ -1,6 +1,6 @@
 -- Create content_items table for editable text content
 CREATE TABLE IF NOT EXISTS public.content_items (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     key TEXT NOT NULL UNIQUE,
     value TEXT NOT NULL,
     page TEXT,

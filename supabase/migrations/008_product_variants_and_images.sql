@@ -9,7 +9,7 @@ CREATE INDEX IF NOT EXISTS idx_products_slug ON public.products(slug);
 
 -- Create product_variants table
 CREATE TABLE IF NOT EXISTS public.product_variants (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     product_id UUID REFERENCES public.products(id) ON DELETE CASCADE NOT NULL,
     name TEXT NOT NULL,
     slug TEXT NOT NULL,
@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_product_variants_slug ON public.product_variants(
 
 -- Create product_images table
 CREATE TABLE IF NOT EXISTS public.product_images (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     product_id UUID REFERENCES public.products(id) ON DELETE CASCADE NOT NULL,
     variant_id UUID REFERENCES public.product_variants(id) ON DELETE CASCADE,
     storage_path TEXT NOT NULL,
@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS idx_product_images_display_order ON public.product_im
 
 -- Create job_queue table for async product creation
 CREATE TABLE IF NOT EXISTS public.job_queue (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     job_type TEXT NOT NULL CHECK (job_type IN ('create_product', 'update_product', 'process_images')),
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
     payload JSONB NOT NULL,

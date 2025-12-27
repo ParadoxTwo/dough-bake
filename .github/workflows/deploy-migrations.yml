@@ -62,7 +62,8 @@ jobs:
           }
 
           echo "🚀 Pushing migrations..."
-          supabase db push || {
+          # Use --yes flag to auto-confirm in non-interactive environment
+          supabase db push --yes || {
             echo "❌ Migration push failed"
             echo "📝 Please run migrations manually via Supabase Dashboard SQL Editor"
             exit 1
