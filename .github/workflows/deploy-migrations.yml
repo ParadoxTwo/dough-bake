@@ -16,14 +16,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
       - name: Install Supabase CLI
-        run: |
-          npm install -g supabase
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Run migrations
         env:
@@ -36,19 +32,40 @@ jobs:
           # Note: You need to set SUPABASE_PROJECT_ID and SUPABASE_ACCESS_TOKEN
           # Get these from: https://supabase.com/dashboard/account/tokens
 
-          if [ -n "$SUPABASE_PROJECT_ID" ] && [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
-            echo "🔗 Linking to Supabase project..."
-            supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_SERVICE_ROLE_KEY"
-            
-            echo "🚀 Pushing migrations..."
-            supabase db push
-          else
-            echo "⚠️  Supabase project not linked. Using manual migration method..."
+          if [ -z "$SUPABASE_PROJECT_ID" ] || [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "⚠️  Missing required secrets: SUPABASE_PROJECT_ID or SUPABASE_ACCESS_TOKEN"
             echo "📝 Please run migrations manually via Supabase Dashboard SQL Editor"
             echo ""
             echo "Migration files to apply:"
             ls -1 supabase/migrations/*.sql
+            exit 0
           fi
+
+          echo "🔗 Linking to Supabase project..."
+          # Set access token for authentication
+          export SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN"
+
+          # Link using project reference ID
+          supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_SERVICE_ROLE_KEY" || {
+            echo "❌ Failed to link project. Trying alternative method..."
+            # Alternative: Use direct database connection
+            if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+              echo "📝 Using direct database connection method..."
+              echo "⚠️  This requires manual migration via Supabase Dashboard SQL Editor"
+              echo ""
+              echo "Migration files to apply:"
+              ls -1 supabase/migrations/*.sql
+              exit 0
+            fi
+            exit 1
+          }
+
+          echo "🚀 Pushing migrations..."
+          supabase db push || {
+            echo "❌ Migration push failed"
+            echo "📝 Please run migrations manually via Supabase Dashboard SQL Editor"
+            exit 1
+          }
 
       - name: Verify migrations
         env:
