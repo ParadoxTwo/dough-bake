@@ -1,0 +1,22 @@
+# Docker Compose is now optional
+# Supabase CLI manages its own Docker containers via `supabase start`
+# This file is kept for reference but not needed for local development
+
+version: '3.8'
+
+# If you need a standalone Postgres for testing, uncomment below:
+# services:
+#   postgres:
+#     image: postgres:15
+#     container_name: dough-bake-db
+#     ports:
+#       - "54322:5432"
+#     environment:
+#       POSTGRES_PASSWORD: your-super-secret-and-long-postgres-password
+#       POSTGRES_DB: postgres
+#       POSTGRES_USER: postgres
+#     volumes:
+#       - postgres-data:/var/lib/postgresql/data
+#
+# volumes:
+#   postgres-data:

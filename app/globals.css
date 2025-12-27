@@ -3,24 +3,108 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Theme variables - will be set by ThemeProvider (default: baked theme) */
+  --theme-primary: #D4AF37;
+  --theme-secondary: #E8D9C8;
+  --theme-accent: #8B4513;
+  --theme-tertiary: #42a5f5;
+  --theme-quaternary: #ec407a;
+  --theme-background: #FFFFFF;
+  --theme-surface: #F5E7D6;
+  --theme-text: #5A3A2B;
+  --theme-text-secondary: #6B3E26;
+  --theme-gradient-start: #F5E7D6;
+  --theme-gradient-middle: #FFFFFF;
+  --theme-gradient-end: #E0D8C8;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter);
+  
+  /* Theme colors */
+  --color-theme-primary: var(--theme-primary);
+  --color-theme-secondary: var(--theme-secondary);
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-tertiary: var(--theme-tertiary);
+  --color-theme-quaternary: var(--theme-quaternary);
+  --color-theme-background: var(--theme-background);
+  --color-theme-surface: var(--theme-surface);
+  --color-theme-text: var(--theme-text);
+  --color-theme-text-secondary: var(--theme-text-secondary);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: radial-gradient(
+    circle at top left,
+    var(--theme-gradient-start),
+    var(--theme-gradient-middle) 40%,
+    var(--theme-gradient-end) 80%,
+    var(--theme-background)
+  );
+  background-attachment: fixed;
+  background-size: 100% 100%;
+  color: var(--theme-text);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar styles to match theme */
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-secondary);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-primary);
+  border-radius: 6px;
+  border: 2px solid var(--theme-secondary);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-accent);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-primary) var(--theme-secondary);
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }

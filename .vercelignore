@@ -1,0 +1,5 @@
+docker-compose.yml
+supabase/kong.yml
+.env.local
+.env*.local
+
