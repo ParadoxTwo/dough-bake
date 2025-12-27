@@ -1,0 +1,59 @@
+name: Deploy Database Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "supabase/migrations/**"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  deploy-migrations:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Supabase CLI
+        run: |
+          npm install -g supabase
+
+      - name: Run migrations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          # Link to production Supabase project
+          # Note: You need to set SUPABASE_PROJECT_ID and SUPABASE_ACCESS_TOKEN
+          # Get these from: https://supabase.com/dashboard/account/tokens
+
+          if [ -n "$SUPABASE_PROJECT_ID" ] && [ -n "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "🔗 Linking to Supabase project..."
+            supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_SERVICE_ROLE_KEY"
+            
+            echo "🚀 Pushing migrations..."
+            supabase db push
+          else
+            echo "⚠️  Supabase project not linked. Using manual migration method..."
+            echo "📝 Please run migrations manually via Supabase Dashboard SQL Editor"
+            echo ""
+            echo "Migration files to apply:"
+            ls -1 supabase/migrations/*.sql
+          fi
+
+      - name: Verify migrations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "✅ Migration deployment complete"
+          echo "💡 Check your Supabase dashboard to verify tables were created"

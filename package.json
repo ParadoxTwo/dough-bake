@@ -14,7 +14,8 @@
     "supabase:credentials": "./scripts/get-supabase-credentials.sh",
     "supabase:seed-admin": "./scripts/seed-admin-user.sh",
     "supabase:seed-admin:prod": "./scripts/seed-admin-user-production.sh",
-    "supabase:fix-admin": "./scripts/fix-admin-user.sh"
+    "supabase:fix-admin": "./scripts/fix-admin-user.sh",
+    "migrate:prod": "./scripts/run-migrations-production.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",

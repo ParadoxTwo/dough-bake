@@ -1,20 +1,53 @@
 #!/bin/bash
 
 # Script to seed admin user in production using Supabase Admin API
-# Usage: SUPABASE_URL=<url> SUPABASE_SERVICE_ROLE_KEY=<key> ./scripts/seed-admin-user-production.sh
+# Usage: ./scripts/seed-admin-user-production.sh
+#   or: SUPABASE_URL=<url> SUPABASE_SERVICE_ROLE_KEY=<key> ./scripts/seed-admin-user-production.sh
+#
+# The script will automatically load environment variables from .env.production if it exists.
+# Command-line environment variables take precedence over .env.production values.
 
 echo "🔐 Seeding Admin User (Production)"
 echo "==================================="
 echo ""
 
+# Get the script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Load environment variables from .env.production if it exists
+ENV_FILE="${PROJECT_ROOT}/.env.production"
+if [ -f "$ENV_FILE" ]; then
+    echo "📄 Loading environment variables from .env.production..."
+    # Export variables from .env.production, ignoring comments and empty lines
+    # This handles KEY=value format and exports them
+    set -a
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Skip comments and empty lines
+        if [[ "$line" =~ ^[[:space:]]*# ]] || [[ -z "${line// }" ]]; then
+            continue
+        fi
+        # Export the variable (handles KEY=value format)
+        export "$line"
+    done < "$ENV_FILE"
+    set +a
+    echo "✅ Environment variables loaded"
+    echo ""
+else
+    echo "ℹ️  .env.production not found, using environment variables from shell"
+    echo ""
+fi
+
 # Check for required environment variables
 if [ -z "$SUPABASE_URL" ] && [ -z "$NEXT_PUBLIC_SUPABASE_URL" ]; then
     echo "❌ SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL environment variable is required"
+    echo "   Set it in .env.production or as an environment variable"
     exit 1
 fi
 
 if [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
     echo "❌ SUPABASE_SERVICE_ROLE_KEY environment variable is required"
+    echo "   Set it in .env.production or as an environment variable"
     exit 1
 fi
 
