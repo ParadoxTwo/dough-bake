@@ -153,7 +153,7 @@ export default function EditableProductInfo({
         )}
       </div>
 
-      {variants.length > 0 && onVariantSelect && (
+      {onVariantSelect && (
         <VariantSelector
           variants={variants}
           selectedVariantId={selectedVariantId || null}

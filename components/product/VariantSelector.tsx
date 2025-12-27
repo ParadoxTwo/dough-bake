@@ -28,10 +28,6 @@ export default function VariantSelector({
   const [editingVariantId, setEditingVariantId] = useState<string | null>(null)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
-  if (variants.length === 0) {
-    return null
-  }
-
   const handleVariantUpdate = async (variantId: string, field: string, value: string | number) => {
     try {
       if (field === 'name') {
@@ -53,34 +49,41 @@ export default function VariantSelector({
     setIsAddModalOpen(true)
   }
 
+  // If no variants and not admin, don't show anything
+  if (variants.length === 0 && !isAdmin) {
+    return null
+  }
+
   return (
     <div className="mb-6">
       <label 
         className="block text-sm font-medium mb-3"
         style={{ color: 'var(--theme-text)' }}
       >
-        Select Variant
+        {variants.length > 0 ? 'Select Variant' : 'Variants'}
       </label>
       <div className="flex flex-wrap gap-3 items-center group">
-        <button
-          onClick={() => onVariantSelect(null)}
-          className={`px-4 py-2 rounded-lg border-2 transition-all ${
-            selectedVariantId === null
-              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
-              : 'border-gray-300 hover:border-gray-400'
-          }`}
-          style={{
-            backgroundColor: selectedVariantId === null 
-              ? 'var(--theme-primary)' 
-              : 'transparent',
-            borderColor: selectedVariantId === null 
-              ? 'var(--theme-accent)' 
-              : 'var(--theme-border)',
-            color: 'var(--theme-text)',
-          }}
-        >
-          Default
-        </button>
+        {variants.length > 0 && (
+          <button
+            onClick={() => onVariantSelect(null)}
+            className={`px-4 py-2 rounded-lg border-2 transition-all ${
+              selectedVariantId === null
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
+                : 'border-gray-300 hover:border-gray-400'
+            }`}
+            style={{
+              backgroundColor: selectedVariantId === null 
+                ? 'var(--theme-primary)' 
+                : 'transparent',
+              borderColor: selectedVariantId === null 
+                ? 'var(--theme-accent)' 
+                : 'var(--theme-border)',
+              color: 'var(--theme-text)',
+            }}
+          >
+            Default
+          </button>
+        )}
         {variants.map((variant) => {
           const isSelected = selectedVariantId === variant.id
           const isAvailable = variant.available && (
@@ -184,14 +187,19 @@ export default function VariantSelector({
           <button
             type="button"
             onClick={handleAddVariantClick}
-            className="p-2 rounded-full border text-sm leading-none opacity-0 group-hover:opacity-100 transition-opacity"
+            className={`px-4 py-2 rounded-lg border-2 transition-all ${
+              variants.length === 0 
+                ? 'opacity-100' 
+                : 'opacity-0 group-hover:opacity-100'
+            }`}
             style={{
               borderColor: 'var(--theme-secondary)',
               color: 'var(--theme-text)',
+              backgroundColor: 'transparent',
             }}
             title="Add variant"
           >
-            +
+            {variants.length === 0 ? '+ Add Variant' : '+'}
           </button>
         )}
       </div>
