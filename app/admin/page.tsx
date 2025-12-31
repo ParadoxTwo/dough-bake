@@ -12,6 +12,7 @@ import ThemeSwitcher from "@/components/ThemeSwitcher";
 import ThemedText from "@/components/ui/ThemedText";
 import AdminProductsList from "@/components/admin/AdminProductsList";
 import CurrencyManager from "@/components/admin/CurrencyManager";
+import PaymentManager from "@/components/admin/PaymentManager";
 import CurrencyText from "@/components/ui/CurrencyText";
 import type { Database } from "@/lib/types/database.types";
 
@@ -107,6 +108,10 @@ export default async function AdminPage() {
           <ThemeSwitcher />
         </Card>
         <CurrencyManager />
+      </div>
+
+      <div className="mb-8">
+        <PaymentManager />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

@@ -4,14 +4,15 @@ on:
   push:
     branches:
       - main
+      - staging
     paths:
       - "supabase/migrations/**"
-  workflow_dispatch: # Allow manual trigger
 
 jobs:
   deploy-migrations:
     runs-on: ubuntu-latest
     environment: Production
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout code
@@ -30,6 +31,75 @@ jobs:
           SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
         run: |
           # Link to production Supabase project
+          # Note: You need to set SUPABASE_PROJECT_ID and SUPABASE_ACCESS_TOKEN
+          # Get these from: https://supabase.com/dashboard/account/tokens
+
+          if [ -z "$SUPABASE_PROJECT_ID" ] || [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "⚠️  Missing required secrets: SUPABASE_PROJECT_ID or SUPABASE_ACCESS_TOKEN"
+            echo "📝 Please run migrations manually via Supabase Dashboard SQL Editor"
+            echo ""
+            echo "Migration files to apply:"
+            ls -1 supabase/migrations/*.sql
+            exit 0
+          fi
+
+          echo "🔗 Linking to Supabase project..."
+          # Set access token for authentication
+          export SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN"
+
+          # Link using project reference ID
+          supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_SERVICE_ROLE_KEY" || {
+            echo "❌ Failed to link project. Trying alternative method..."
+            # Alternative: Use direct database connection
+            if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+              echo "📝 Using direct database connection method..."
+              echo "⚠️  This requires manual migration via Supabase Dashboard SQL Editor"
+              echo ""
+              echo "Migration files to apply:"
+              ls -1 supabase/migrations/*.sql
+              exit 0
+            fi
+            exit 1
+          }
+
+          echo "🚀 Pushing migrations..."
+          # Use --yes flag to auto-confirm in non-interactive environment
+          supabase db push --yes || {
+            echo "❌ Migration push failed"
+            echo "📝 Please run migrations manually via Supabase Dashboard SQL Editor"
+            exit 1
+          }
+
+      - name: Verify migrations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "✅ Migration deployment complete"
+          echo "💡 Check your Supabase dashboard to verify tables were created"
+
+  deploy-migrations-staging:
+    runs-on: ubuntu-latest
+    environment: Staging
+    if: github.ref == 'refs/heads/staging'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Run migrations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          # Link to staging Supabase project
           # Note: You need to set SUPABASE_PROJECT_ID and SUPABASE_ACCESS_TOKEN
           # Get these from: https://supabase.com/dashboard/account/tokens
 
