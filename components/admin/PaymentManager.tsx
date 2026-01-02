@@ -369,7 +369,7 @@ export default function PaymentManager() {
                   : 'border-[var(--theme-secondary)] hover:border-[var(--theme-accent)] hover:border-opacity-50'
               }`}
             >
-              <ThemedText as="div" weight="semibold" className="capitalize">
+              <ThemedText as="div" weight="semibold" className="capitalize" style={provider === p ? { color: 'white' } : { color: 'var(--theme-text)' }}>
                 {p === 'payu' ? 'PayU' : p === 'paytm' ? 'PayTM' : p.charAt(0).toUpperCase() + p.slice(1)}
               </ThemedText>
             </button>
@@ -397,7 +397,7 @@ export default function PaymentManager() {
           <ThemedText
             as="p"
             size="sm"
-            style={{ color: message.type === 'success' ? '#10b981' : '#ef4444' }}
+            style={{ color: 'white' }}
           >
             {message.text}
           </ThemedText>

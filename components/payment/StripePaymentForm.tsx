@@ -68,7 +68,7 @@ function PaymentFormInner({
       
       {errorMessage && (
         <div className="p-4 rounded-lg bg-red-500 bg-opacity-10 border border-red-500">
-          <ThemedText as="p" size="sm" style={{ color: '#ef4444' }}>
+          <ThemedText as="p" size="sm" style={{ color: 'white' }}>
             {errorMessage}
           </ThemedText>
         </div>
