@@ -47,9 +47,18 @@ export default async function AdminPage() {
 
   const productsResult = await supabase
     .from("products")
-    .select("*")
+    .select(`
+      *,
+      product_variants (
+        id,
+        name,
+        product_id
+      )
+    `)
     .order("created_at", { ascending: false });
-  const products = productsResult.data as ProductRow[] | null;
+  const products = productsResult.data as (ProductRow & {
+    product_variants: Array<{ id: string; name: string; product_id: string }> | null;
+  })[] | null;
 
   const ordersResult = await supabase
     .from("orders")

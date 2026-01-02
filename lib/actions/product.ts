@@ -539,3 +539,91 @@ export async function createVariant(
 
   return { id: variant.id }
 }
+
+/**
+ * Delete a product and all associated data
+ * This will delete:
+ * - Product from database
+ * - All variants (via CASCADE)
+ * - All images from database (via CASCADE)
+ * - All images from storage (product and variant images)
+ */
+export async function deleteProduct(productId: string): Promise<void> {
+  const supabase = await createClient()
+
+  // Verify admin access
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if ((profile as ProfileRow | null)?.role !== 'admin') {
+    throw new Error('Unauthorized: Admin access required')
+  }
+
+  // Check if product is referenced in any orders
+  const { data: orderItems, error: orderItemsError } = await supabase
+    .from('order_items')
+    .select('id')
+    .eq('product_id', productId)
+    .limit(1)
+
+  if (orderItemsError) {
+    console.error('Failed to check order items:', orderItemsError)
+    // Continue with deletion attempt - database will enforce the constraint
+  }
+
+  if (orderItems && orderItems.length > 0) {
+    throw new Error(
+      'Cannot delete product: This product is associated with existing orders. ' +
+      'Products that have been ordered cannot be deleted to maintain order history integrity.'
+    )
+  }
+
+  // Get all images for this product (both product-level and variant-level)
+  const { data: allImages, error: imagesError } = await supabase
+    .from('product_images')
+    .select('storage_path')
+    .eq('product_id', productId)
+
+  if (imagesError) {
+    console.error('Failed to fetch images:', imagesError)
+    // Continue with deletion even if we can't fetch images
+  }
+
+  // Delete all images from storage
+  const typedImages = (allImages || []) as Array<{ storage_path: string }>
+  if (typedImages.length > 0) {
+    const storagePaths = typedImages
+      .map((img) => img.storage_path)
+      .filter((path): path is string => path !== null && path !== undefined)
+
+    if (storagePaths.length > 0) {
+      const { error: storageError } = await supabase.storage
+        .from('products')
+        .remove(storagePaths)
+
+      if (storageError) {
+        console.error('Failed to delete images from storage:', storageError)
+        // Continue with database deletion even if storage deletion fails
+      }
+    }
+  }
+
+  // Delete the product from database
+  // This will cascade delete variants and images from database
+  const { error: deleteError } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', productId)
+
+  if (deleteError) {
+    throw new Error(`Failed to delete product: ${deleteError.message}`)
+  }
+}
