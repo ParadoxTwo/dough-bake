@@ -56,14 +56,13 @@ export default function OrderHeader({
     }
 
     const stripeConfig = paymentSettings.config
-    const publishableKey = stripeConfig?.publishableKey || ''
     const secretKey = stripeConfig?.secretKey || ''
 
-    if (!publishableKey || !secretKey) {
+    if (!secretKey) {
       return null
     }
 
-    return buildStripeTransactionUrl(paymentId, publishableKey, secretKey)
+    return buildStripeTransactionUrl(paymentId, secretKey)
   }
 
   const stripeUrl = getStripeTransactionUrl()
