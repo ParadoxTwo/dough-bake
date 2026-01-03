@@ -1,7 +1,8 @@
 /**
- * Hardcoded Stripe account ID for dashboard URLs
+ * Hardcoded Stripe account IDs for dashboard URLs
  */
-const STRIPE_ACCOUNT_ID = '1SixG9GWfInJByRy'
+const STRIPE_TEST_ACCOUNT_ID = '1SixGGGd1icF1sdW'
+const STRIPE_LIVE_ACCOUNT_ID = '1SixG9GWfInJByRy'
 
 /**
  * Determine if Stripe secret key is for test or live mode
@@ -29,10 +30,13 @@ export function buildStripeTransactionUrl(
   // Determine if test or live mode
   const isTest = isTestMode(secretKey)
   
+  // Use different account IDs for test and live modes
+  const accountId = isTest ? STRIPE_TEST_ACCOUNT_ID : STRIPE_LIVE_ACCOUNT_ID
+  
   // Build URL
-  // Test: https://dashboard.stripe.com/acct_{ACCOUNT_ID}/test/payments/{PAYMENT_ID}
-  // Live: https://dashboard.stripe.com/acct_{ACCOUNT_ID}/payments/{PAYMENT_ID}
-  const baseUrl = `https://dashboard.stripe.com/acct_${STRIPE_ACCOUNT_ID}`
+  // Test: https://dashboard.stripe.com/acct_{TEST_ACCOUNT_ID}/test/payments/{PAYMENT_ID}
+  // Live: https://dashboard.stripe.com/acct_{LIVE_ACCOUNT_ID}/payments/{PAYMENT_ID}
+  const baseUrl = `https://dashboard.stripe.com/acct_${accountId}`
   const testPath = isTest ? '/test' : ''
   const url = `${baseUrl}${testPath}/payments/${paymentId}`
   
