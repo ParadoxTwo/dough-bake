@@ -8,6 +8,10 @@ const statusColors: Record<string, { bg: string; text: string }> = {
     bg: 'rgba(34, 197, 94, 0.2)',
     text: 'rgb(22, 163, 74)'
   },
+  fulfilled: {
+    bg: 'rgba(34, 197, 94, 0.2)',
+    text: 'rgb(22, 163, 74)'
+  },
   pending: {
     bg: 'rgba(234, 179, 8, 0.2)',
     text: 'rgb(161, 98, 7)'
@@ -17,6 +21,18 @@ const statusColors: Record<string, { bg: string; text: string }> = {
     text: 'rgb(37, 99, 235)'
   },
   cancelled: {
+    bg: 'rgba(239, 68, 68, 0.2)',
+    text: 'rgb(185, 28, 28)'
+  },
+  paid: {
+    bg: 'rgba(34, 197, 94, 0.2)',
+    text: 'rgb(22, 163, 74)'
+  },
+  'pending payment': {
+    bg: 'rgba(234, 179, 8, 0.2)',
+    text: 'rgb(161, 98, 7)'
+  },
+  'payment failed': {
     bg: 'rgba(239, 68, 68, 0.2)',
     text: 'rgb(185, 28, 28)'
   }

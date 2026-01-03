@@ -7,6 +7,7 @@ export type Json =
   | Json[]
 
 import { PaymentStatus } from './payment'
+import { OrderStatus } from './order'
 
 export interface Database {
   public: {

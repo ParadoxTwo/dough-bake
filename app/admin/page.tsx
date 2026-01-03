@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import PageContainer from "@/components/layout/PageContainer";
 import PageHeader from "@/components/ui/PageHeader";
 import StatCard from "@/components/ui/StatCard";
@@ -128,9 +129,18 @@ export default async function AdminPage() {
         <AdminProductsList products={products || []} />
 
         <Card>
-          <ThemedText as="h2" size="xl" weight="bold" className="mb-6">
-            Recent Orders
-          </ThemedText>
+          <div className="flex justify-between items-center mb-6">
+            <ThemedText as="h2" size="xl" weight="bold">
+              Recent Orders
+            </ThemedText>
+            <Link
+              href="/admin/orders"
+              className="text-sm hover:opacity-70 transition-opacity"
+              style={{ color: 'var(--theme-accent)' }}
+            >
+              View All
+            </Link>
+          </div>
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {orders && orders.length > 0 ? (
               orders.map((order) => (
