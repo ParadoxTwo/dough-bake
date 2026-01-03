@@ -6,6 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+import { PaymentStatus } from './payment'
+
 export interface Database {
   public: {
     Tables: {
@@ -250,7 +252,7 @@ export interface Database {
           total_amount: number
           status: 'pending' | 'processing' | 'completed' | 'cancelled'
           payment_id: string | null
-          payment_status: 'pending' | 'completed' | 'failed'
+          payment_status: PaymentStatus
           created_at: string
           updated_at: string
         }
@@ -260,7 +262,7 @@ export interface Database {
           total_amount: number
           status?: 'pending' | 'processing' | 'completed' | 'cancelled'
           payment_id?: string | null
-          payment_status?: 'pending' | 'completed' | 'failed'
+          payment_status?: PaymentStatus
           created_at?: string
           updated_at?: string
         }
@@ -270,7 +272,7 @@ export interface Database {
           total_amount?: number
           status?: 'pending' | 'processing' | 'completed' | 'cancelled'
           payment_id?: string | null
-          payment_status?: 'pending' | 'completed' | 'failed'
+          payment_status?: PaymentStatus
           created_at?: string
           updated_at?: string
         }

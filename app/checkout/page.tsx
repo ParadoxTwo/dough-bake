@@ -16,6 +16,7 @@ import ThemedText from "@/components/ui/ThemedText";
 import { useCurrency } from "@/lib/currency/context";
 import type { PaymentProvider } from "@/lib/payment/types";
 import PaymentForm from "@/components/payment/PaymentForm";
+import { PaymentStatus } from "@/lib/types/payment";
 
 interface CustomerInfo {
   name: string;
@@ -177,7 +178,7 @@ export default function CheckoutPage() {
             customer_id: customerId,
             total_amount: baseTotal,
             status: "pending",
-            payment_status: "pending",
+            payment_status: PaymentStatus.PENDING,
           } as OrderInsert,
         ])
         .select()
@@ -218,7 +219,7 @@ export default function CheckoutPage() {
       // If payment is not configured, complete order without payment
       if (!paymentProvider || !paymentConfig) {
         const updateData: OrderUpdate = {
-          payment_status: "completed",
+          payment_status: PaymentStatus.COMPLETED,
           status: "processing",
         }
         // Type assertion needed because Supabase's type inference doesn't always work correctly

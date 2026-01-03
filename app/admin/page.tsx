@@ -15,6 +15,7 @@ import CurrencyManager from "@/components/admin/CurrencyManager";
 import PaymentManager from "@/components/admin/PaymentManager";
 import CurrencyText from "@/components/ui/CurrencyText";
 import type { Database } from "@/lib/types/database.types";
+import { PaymentStatus } from "@/lib/types/payment";
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type ProductRow = Database['public']['Tables']['products']['Row'];
@@ -85,7 +86,7 @@ export default async function AdminPage() {
   const revenueResult = await supabase
     .from("orders")
     .select("total_amount")
-    .eq("payment_status", "completed");
+    .eq("payment_status", PaymentStatus.COMPLETED);
   const revenueData = revenueResult.data as Pick<OrderRow, 'total_amount'>[] | null;
 
   const totalRevenue = revenueData?.reduce(

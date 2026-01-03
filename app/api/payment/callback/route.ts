@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getPaymentSettings } from '@/lib/actions/payment'
 import { PaymentProviderFactory } from '@/lib/payment/factory'
 import type { Database } from '@/lib/types/database.types'
+import { PaymentStatus } from '@/lib/types/payment'
 
 type OrderUpdate = Database['public']['Tables']['orders']['Update']
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
     if (verifyResult.verified && verifyResult.status === 'success') {
       // Update order payment status
       const updateData: OrderUpdate = {
-        payment_status: 'completed',
+        payment_status: PaymentStatus.COMPLETED,
         payment_id: paymentId,
         updated_at: new Date().toISOString(),
       }
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
 
     // Payment failed or not verified
     const failedUpdateData: OrderUpdate = {
-      payment_status: 'failed',
+      payment_status: PaymentStatus.FAILED,
       payment_id: paymentId,
       updated_at: new Date().toISOString(),
     }
