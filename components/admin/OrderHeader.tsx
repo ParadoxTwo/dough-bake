@@ -6,6 +6,21 @@ import { PaymentStatus } from '@/lib/types/payment'
 import type { PaymentConfig } from '@/lib/payment/types'
 import { buildStripeTransactionUrl } from '@/lib/utils/stripe-url'
 
+/**
+ * Format date consistently for server and client to avoid hydration mismatches
+ * Uses UTC to ensure consistent formatting regardless of server/client timezone
+ */
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+  const hours = String(date.getUTCHours()).padStart(2, '0')
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0')
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0')
+  return `${month}/${day}/${year}, ${hours}:${minutes}:${seconds}`
+}
+
 type CustomerRow = {
   name: string | null
   phone: string | null
@@ -93,7 +108,7 @@ export default function OrderHeader({
           Customer: {customer?.name || 'Unknown'}
         </ThemedText>
         <ThemedText as="p" size="sm" tone="secondary">
-          Date: {new Date(createdAt).toLocaleString()}
+          Date: {formatDate(createdAt)}
         </ThemedText>
         {customer?.phone && (
           <ThemedText as="p" size="sm" tone="secondary">
