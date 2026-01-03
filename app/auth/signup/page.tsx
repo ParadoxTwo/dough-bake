@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 import ErrorMessage from "@/components/auth/ErrorMessage";
 
 export default function SignUpPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -36,9 +37,20 @@ export default function SignUpPage() {
       return;
     }
 
+    if (!name || name.trim().length === 0) {
+      setError("Name is required");
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          name: name.trim(),
+        },
+      },
     });
 
     if (error) {
@@ -66,6 +78,18 @@ export default function SignUpPage() {
         <ErrorMessage message={error} />
 
         <div className="space-y-4">
+          <Input
+            label="Full Name"
+            id="name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="John Doe"
+          />
+
           <Input
             label="Email address"
             id="email"
