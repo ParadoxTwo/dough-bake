@@ -3,6 +3,8 @@ import ThemedText from '@/components/ui/ThemedText'
 import StatusBadge from '@/components/ui/StatusBadge'
 import CurrencyText from '@/components/ui/CurrencyText'
 import { PaymentStatus } from '@/lib/types/payment'
+import type { PaymentConfig } from '@/lib/payment/types'
+import { buildStripeTransactionUrl } from '@/lib/utils/stripe-url'
 
 type CustomerRow = {
   name: string | null
@@ -17,9 +19,11 @@ interface OrderHeaderProps {
   orderId: string
   displayStatus: string
   paymentStatus: PaymentStatus
+  paymentId: string | null
   customer: CustomerRow | null
   totalAmount: number
   createdAt: string
+  paymentSettings: PaymentConfig | null
   children?: ReactNode
 }
 
@@ -27,9 +31,11 @@ export default function OrderHeader({
   orderId,
   displayStatus,
   paymentStatus,
+  paymentId,
   customer,
   totalAmount,
   createdAt,
+  paymentSettings,
   children,
 }: OrderHeaderProps) {
   const getPaymentStatusLabel = () => {
@@ -37,6 +43,30 @@ export default function OrderHeader({
     if (paymentStatus === PaymentStatus.PENDING) return 'pending payment'
     return 'payment failed'
   }
+
+  const getStripeTransactionUrl = (): string | null => {
+    // Only show link if payment is completed, provider is Stripe, and payment_id starts with pi_
+    if (
+      paymentStatus !== PaymentStatus.COMPLETED ||
+      paymentSettings?.provider !== 'stripe' ||
+      !paymentId ||
+      !paymentId.startsWith('pi_')
+    ) {
+      return null
+    }
+
+    const stripeConfig = paymentSettings.config
+    const publishableKey = stripeConfig?.publishableKey || ''
+    const secretKey = stripeConfig?.secretKey || ''
+
+    if (!publishableKey || !secretKey) {
+      return null
+    }
+
+    return buildStripeTransactionUrl(paymentId, publishableKey, secretKey)
+  }
+
+  const stripeUrl = getStripeTransactionUrl()
 
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -46,7 +76,19 @@ export default function OrderHeader({
             Order #{orderId.slice(0, 8)}
           </ThemedText>
           <StatusBadge status={displayStatus} />
-          <StatusBadge status={getPaymentStatusLabel()} />
+          {stripeUrl ? (
+            <a
+              href={stripeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block transition-opacity hover:opacity-80 cursor-pointer"
+              title="View transaction in Stripe Dashboard"
+            >
+              <StatusBadge status={getPaymentStatusLabel()} />
+            </a>
+          ) : (
+            <StatusBadge status={getPaymentStatusLabel()} />
+          )}
         </div>
         <ThemedText as="p" size="sm" tone="secondary">
           Customer: {customer?.name || 'Unknown'}

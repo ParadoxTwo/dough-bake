@@ -8,6 +8,7 @@ import OrderItemsAccordion from './OrderItemsAccordion'
 import { OrderStatus } from '@/lib/types/order'
 import { PaymentStatus } from '@/lib/types/payment'
 import type { Database } from '@/lib/types/database.types'
+import type { PaymentConfig } from '@/lib/payment/types'
 
 type OrderRow = Database['public']['Tables']['orders']['Row']
 type OrderItemRow = Database['public']['Tables']['order_items']['Row']
@@ -28,6 +29,7 @@ interface OrderCardProps {
   updatingOrderId: string | null
   deletingOrderId: string | null
   getDisplayStatus: (status: string) => string
+  paymentSettings: PaymentConfig | null
 }
 
 export default function OrderCard({
@@ -37,6 +39,7 @@ export default function OrderCard({
   updatingOrderId,
   deletingOrderId,
   getDisplayStatus,
+  paymentSettings,
 }: OrderCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const currentStatus = order.status
@@ -51,9 +54,11 @@ export default function OrderCard({
         orderId={order.id}
         displayStatus={displayStatus}
         paymentStatus={order.payment_status}
+        paymentId={order.payment_id}
         customer={order.customers}
         totalAmount={order.total_amount}
         createdAt={order.created_at}
+        paymentSettings={paymentSettings}
       >
         <OrderActions
           orderId={order.id}

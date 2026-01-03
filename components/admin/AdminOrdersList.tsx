@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import ThemedText from '@/components/ui/ThemedText'
@@ -10,6 +10,7 @@ import type { Database } from '@/lib/types/database.types'
 import { OrderStatus } from '@/lib/types/order'
 import { useCurrency } from '@/lib/currency/context'
 import { filterOrders, getDisplayStatus } from '@/lib/utils/order-search'
+import type { PaymentConfig } from '@/lib/payment/types'
 
 type OrderRow = Database['public']['Tables']['orders']['Row']
 type OrderItemRow = Database['public']['Tables']['order_items']['Row']
@@ -32,8 +33,25 @@ export default function AdminOrdersList({ orders: initialOrders }: AdminOrdersLi
   const [searchQuery, setSearchQuery] = useState('')
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null)
   const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null)
+  const [paymentSettings, setPaymentSettings] = useState<PaymentConfig | null>(null)
   const router = useRouter()
   const { formatPrice, convertPrice } = useCurrency()
+
+  // Fetch payment settings
+  useEffect(() => {
+    const fetchPaymentSettings = async () => {
+      try {
+        const response = await fetch('/api/payment/settings')
+        if (response.ok) {
+          const data = await response.json()
+          setPaymentSettings(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch payment settings:', error)
+      }
+    }
+    fetchPaymentSettings()
+  }, [])
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     setUpdatingOrderId(orderId)
@@ -139,6 +157,7 @@ export default function AdminOrdersList({ orders: initialOrders }: AdminOrdersLi
               updatingOrderId={updatingOrderId}
               deletingOrderId={deletingOrderId}
               getDisplayStatus={getDisplayStatus}
+              paymentSettings={paymentSettings}
             />
           ))
         ) : searchQuery ? (
