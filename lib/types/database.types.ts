@@ -17,6 +17,7 @@ export interface Database {
           id: string
           email: string
           username: string | null
+          profile_picture_url: string | null
           role: 'customer' | 'admin'
           created_at: string
           updated_at: string
@@ -25,6 +26,7 @@ export interface Database {
           id: string
           email: string
           username?: string | null
+          profile_picture_url?: string | null
           role?: 'customer' | 'admin'
           created_at?: string
           updated_at?: string
@@ -33,6 +35,7 @@ export interface Database {
           id?: string
           email?: string
           username?: string | null
+          profile_picture_url?: string | null
           role?: 'customer' | 'admin'
           created_at?: string
           updated_at?: string

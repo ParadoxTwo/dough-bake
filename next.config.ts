@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
     ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Disable image optimization in development to avoid private IP blocking
+    // Images will still load, just without Next.js optimization
+    unoptimized: process.env.NODE_ENV === 'development',
   },
 };
 

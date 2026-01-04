@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { User } from '@supabase/supabase-js'
-import { getCurrentUserProfile } from '@/lib/actions/user'
 import Logo from './Logo'
 import CartIcon from './ui/CartIcon'
 import CartDrawer from './ui/CartDrawer'
@@ -27,20 +26,30 @@ export default function Navbar() {
 
   useEffect(() => {
     const getUser = async () => {
-      // Get user from client-side auth (for session management)
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      setUser(authUser || null)
+      try {
+        // Get user from client-side auth (for session management)
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        setUser(authUser || null)
 
-      // Fetch profile from server-side action
-      const userProfile = await getCurrentUserProfile()
-      
-      if (userProfile) {
-        setIsAdmin(userProfile.isAdmin)
-      } else {
+        if (authUser) {
+          // Fetch profile directly from Supabase instead of server action to avoid routing issues
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', authUser.id)
+            .single()
+
+          const typedProfile = profile as { role: 'customer' | 'admin' } | null
+          setIsAdmin(typedProfile?.role === 'admin' || false)
+        } else {
+          setIsAdmin(false)
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error)
         setIsAdmin(false)
+      } finally {
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
     getUser()
@@ -50,9 +59,20 @@ export default function Navbar() {
       setUser(session?.user ?? null)
       
       if (session?.user) {
-        // Fetch profile from server when auth state changes
-        const userProfile = await getCurrentUserProfile()
-        setIsAdmin(userProfile?.isAdmin || false)
+        try {
+          // Fetch profile directly from Supabase
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single()
+
+          const typedProfile = profile as { role: 'customer' | 'admin' } | null
+          setIsAdmin(typedProfile?.role === 'admin' || false)
+        } catch (error) {
+          console.error('Error fetching profile on auth change:', error)
+          setIsAdmin(false)
+        }
       } else {
         setIsAdmin(false)
       }

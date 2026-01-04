@@ -1,4 +1,4 @@
-import React, { type CSSProperties } from 'react'
+import React, { useId, type CSSProperties } from 'react'
 
 export const inputBaseClasses =
   'w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all'
@@ -10,7 +10,7 @@ export const inputBaseStyle = (error?: string): CSSProperties => ({
 })
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
-  label: string
+  label?: string
   error?: string
   multiline?: boolean
   rows?: number
@@ -28,17 +28,22 @@ export default function Input({
   rows = 4,
   ...props 
 }: InputProps) {
-  const inputId = id || `input-${label.toLowerCase().replace(/\s+/g, '-')}`
+  // Use React's useId hook for stable IDs that match between server and client
+  const generatedId = useId()
+  // Prefer provided id, then label-based id, then name-based id, then generated id
+  const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : (props.name ? `input-${props.name}` : generatedId))
 
   return (
     <div>
-      <label 
-        htmlFor={inputId}
-        className="block text-sm font-medium mb-2"
-        style={{ color: 'var(--theme-text)' }}
-      >
-        {label}
-      </label>
+      {label && (
+        <label 
+          htmlFor={inputId}
+          className="block text-sm font-medium mb-2"
+          style={{ color: 'var(--theme-text)' }}
+        >
+          {label}
+        </label>
+      )}
       {multiline ? (
         <textarea
           id={inputId}
