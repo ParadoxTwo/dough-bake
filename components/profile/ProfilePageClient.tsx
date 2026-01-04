@@ -8,6 +8,7 @@ import PageHeader from '@/components/ui/PageHeader'
 import ErrorMessage from '@/components/auth/ErrorMessage'
 import ProfilePictureSection from './ProfilePictureSection'
 import ProfileInfoForm from './ProfileInfoForm'
+import PasswordChangeForm from './PasswordChangeForm'
 
 interface ProfilePageClientProps {
   profile: UserProfileWithCustomer
@@ -38,6 +39,8 @@ export default function ProfilePageClient({
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [sendingReset, setSendingReset] = useState(false)
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
 
   // Update form data when profile changes (e.g., after refresh)
   useEffect(() => {
@@ -209,6 +212,38 @@ export default function ProfilePageClient({
     })
   }
 
+  const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
+    setIsChangingPassword(true)
+    setPasswordError('')
+    setError('')
+    setSuccess('')
+
+    try {
+      const response = await fetch('/api/profile/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to change password')
+      }
+
+      setSuccess('Password changed successfully')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to change password'
+      setPasswordError(errorMessage)
+      setError(errorMessage)
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
   const displayName = profile.customer?.name || profile.email
 
   return (
@@ -253,6 +288,17 @@ export default function ProfilePageClient({
             onCancel={handleCancel}
           />
         </div>
+
+        {/* Password change form - only visible to users viewing their own profile */}
+        {isOwnProfile && (
+          <div className="mt-6">
+            <PasswordChangeForm
+              isChanging={isChangingPassword}
+              error={passwordError}
+              onPasswordChange={handlePasswordChange}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
