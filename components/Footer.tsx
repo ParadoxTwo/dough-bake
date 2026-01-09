@@ -1,10 +1,22 @@
 import Link from 'next/link'
 import Logo from './Logo'
 import { getContent } from '@/lib/content'
+import { getUniqueCategories } from '@/lib/actions/product'
 
 export default async function Footer() {
   const currentYear = new Date().getFullYear()
   const logoTagline = await getContent('logo_tagline')
+  const categories = await getUniqueCategories()
+  
+  // Calculate number of columns and gap based on category count
+  const getGridConfig = (count: number) => {
+    if (count <= 6) return { colsClass: 'grid-cols-2', gapClass: 'gap-x-4' }
+    if (count <= 12) return { colsClass: 'grid-cols-3', gapClass: 'gap-x-3' }
+    if (count <= 18) return { colsClass: 'grid-cols-4', gapClass: 'gap-x-2' }
+    return { colsClass: 'grid-cols-5', gapClass: 'gap-x-1' }
+  }
+  
+  const gridConfig = categories.length > 0 ? getGridConfig(categories.length) : { colsClass: 'grid-cols-2', gapClass: 'gap-x-4' }
 
   return (
     <footer 
@@ -45,33 +57,23 @@ export default async function Footer() {
                   All Products
                 </Link>
               </li>
-              <li>
-                <Link 
-                  href="/menu?category=Bread" 
-                  className="text-sm hover:opacity-70 transition-opacity"
-                  style={{ color: 'var(--theme-text-secondary)' }}
-                >
-                  Breads
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/menu?category=Pastry" 
-                  className="text-sm hover:opacity-70 transition-opacity"
-                  style={{ color: 'var(--theme-text-secondary)' }}
-                >
-                  Pastries
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  href="/menu?category=Cookies" 
-                  className="text-sm hover:opacity-70 transition-opacity"
-                  style={{ color: 'var(--theme-text-secondary)' }}
-                >
-                  Cookies
-                </Link>
-              </li>
+              {categories.length > 0 && (
+                <li>
+                  <ul className={`grid ${gridConfig.colsClass} ${gridConfig.gapClass} gap-y-2`}>
+                    {categories.map((category) => (
+                      <li key={category}>
+                        <Link 
+                          href={`/menu?q=${encodeURIComponent(category)}`}
+                          className="text-sm hover:opacity-70 transition-opacity"
+                          style={{ color: 'var(--theme-text-secondary)' }}
+                        >
+                          {category}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              )}
             </ul>
           </div>
 

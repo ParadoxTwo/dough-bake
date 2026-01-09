@@ -4,9 +4,15 @@ import PageContainer from "@/components/layout/PageContainer";
 import PageHeader from "@/components/ui/PageHeader";
 import MenuPageClient from "@/components/menu/MenuPageClient";
 
-export default async function MenuPage() {
+interface MenuPageProps {
+  searchParams: Promise<{ q?: string }>
+}
+
+export default async function MenuPage({ searchParams }: MenuPageProps) {
   const products = await getProductsWithImages();
   const menuSubtitle = await getContent('logo_tagline');
+  const params = await searchParams;
+  const initialQuery = params.q || '';
 
   return (
     <PageContainer>
@@ -15,7 +21,7 @@ export default async function MenuPage() {
         subtitle={menuSubtitle}
       />
 
-      <MenuPageClient products={products} />
+      <MenuPageClient products={products} initialQuery={initialQuery} />
     </PageContainer>
   );
 }

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Product } from '@/lib/types/product'
 import { groupProductsByCategory } from '@/lib/utils/products'
 import CategorySection from '@/components/product/CategorySection'
@@ -10,11 +11,47 @@ import { useCurrency } from '@/lib/currency/context'
 
 interface MenuPageClientProps {
   products: Product[]
+  initialQuery?: string
 }
 
-export default function MenuPageClient({ products }: MenuPageClientProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+export default function MenuPageClient({ products, initialQuery = '' }: MenuPageClientProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState(initialQuery)
   const { formatPrice, convertPrice } = useCurrency()
+
+  // Sync search query with URL params (only when URL changes, not when searchQuery changes)
+  useEffect(() => {
+    const q = searchParams.get('q') || ''
+    if (q !== searchQuery) {
+      setSearchQuery(q)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // Update URL when search query changes (with debounce)
+  useEffect(() => {
+    const currentQ = searchParams.get('q') || ''
+    const trimmedQuery = searchQuery.trim()
+    
+    // Only update URL if the value has actually changed
+    if (currentQ === trimmedQuery) {
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (trimmedQuery) {
+        params.set('q', trimmedQuery)
+      } else {
+        params.delete('q')
+      }
+      const newUrl = params.toString() ? `/menu?${params.toString()}` : '/menu'
+      router.replace(newUrl, { scroll: false })
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
+  }, [searchQuery, router, searchParams])
 
   // Filter products based on search query
   const filteredProducts = useMemo(() => {

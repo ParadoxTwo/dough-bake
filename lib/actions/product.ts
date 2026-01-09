@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server'
 import { Product } from '@/lib/types/product'
 import { ProductFormData, ProductWithVariants } from '@/lib/types/variant'
 import { Database } from '@/lib/types/database.types'
-import { notFound } from 'next/navigation'
 import { generateUniqueProductSlug, generateUniqueVariantSlug } from '@/lib/utils/slug'
 import { uploadProductImage, saveProductImage } from '@/lib/utils/images'
 
@@ -36,6 +35,37 @@ export async function getProductById(id: string): Promise<Product | null> {
   }
 
   return typedData
+}
+
+/**
+ * Get unique categories from products
+ */
+export async function getUniqueCategories(): Promise<string[]> {
+  const supabase = await createClient()
+
+  const { data: products, error } = await supabase
+    .from('products')
+    .select('category')
+    .eq('available', true)
+    .not('category', 'is', null)
+
+  if (error || !products) {
+    return []
+  }
+
+  // Type the result as array of objects with category property
+  const typedProducts = products as Array<{ category: string | null }>
+
+  // Get unique categories and filter out null values
+  const categories = Array.from(
+    new Set(
+      typedProducts
+        .map((p) => p.category)
+        .filter((cat): cat is string => cat !== null && cat !== undefined)
+    )
+  ).sort()
+
+  return categories
 }
 
 /**
