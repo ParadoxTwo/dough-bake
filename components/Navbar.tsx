@@ -25,60 +25,133 @@ export default function Navbar() {
   const supabase = createClient()
 
   useEffect(() => {
+    let isMounted = true
+    let timeoutId: NodeJS.Timeout | null = null
+
+    const fetchUserProfile = async (userId: string) => {
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single()
+
+        if (!isMounted) return
+
+        if (profileError) {
+          console.error('Profile fetch error:', profileError)
+          setIsAdmin(false)
+        } else {
+          const typedProfile = profile as { role: 'customer' | 'admin' } | null
+          setIsAdmin(typedProfile?.role === 'admin' || false)
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+        if (isMounted) {
+          setIsAdmin(false)
+        }
+      }
+    }
+
     const getUser = async () => {
       try {
-        // Get user from client-side auth (for session management)
-        const { data: { user: authUser } } = await supabase.auth.getUser()
+        // Add timeout to prevent hanging
+        const getUserPromise = supabase.auth.getUser()
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+        })
+
+        let authResult: { data: { user: any }, error: any }
+        try {
+          authResult = await Promise.race([
+            getUserPromise,
+            timeoutPromise,
+          ]) as { data: { user: any }, error: any }
+        } catch (timeoutError) {
+          console.error('Auth check timed out:', timeoutError)
+          if (isMounted) {
+            setUser(null)
+            setIsAdmin(false)
+            setLoading(false)
+          }
+          return
+        }
+
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+          timeoutId = null
+        }
+
+        if (!isMounted) return
+
+        const { data: { user: authUser }, error: authError } = authResult
+
+        if (authError) {
+          // AuthSessionMissingError is expected when user is not logged in - don't log as error
+          const isSessionMissing = authError.name === 'AuthSessionMissingError' || 
+                                   authError.message?.includes('session missing')
+          
+          if (!isSessionMissing) {
+            console.error('Auth error:', authError)
+          }
+          
+          setUser(null)
+          setIsAdmin(false)
+          setLoading(false)
+          return
+        }
+
         setUser(authUser || null)
 
         if (authUser) {
-          // Fetch profile directly from Supabase instead of server action to avoid routing issues
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', authUser.id)
-            .single()
-
-          const typedProfile = profile as { role: 'customer' | 'admin' } | null
-          setIsAdmin(typedProfile?.role === 'admin' || false)
+          await fetchUserProfile(authUser.id)
         } else {
           setIsAdmin(false)
         }
       } catch (error) {
-        console.error('Error fetching user profile:', error)
-        setIsAdmin(false)
+        console.error('Error fetching user:', error)
+        if (isMounted) {
+          setUser(null)
+          setIsAdmin(false)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
+        if (timeoutId) {
+          clearTimeout(timeoutId)
+        }
       }
     }
 
+    // Initial user fetch
     getUser()
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return
+      
+      console.log('Auth state changed:', event, session?.user?.email)
+      
       setUser(session?.user ?? null)
+      setLoading(false) // Always set loading to false when auth state changes
       
       if (session?.user) {
-        try {
-          // Fetch profile directly from Supabase
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single()
-
-          const typedProfile = profile as { role: 'customer' | 'admin' } | null
-          setIsAdmin(typedProfile?.role === 'admin' || false)
-        } catch (error) {
-          console.error('Error fetching profile on auth change:', error)
-          setIsAdmin(false)
-        }
+        await fetchUserProfile(session.user.id)
       } else {
         setIsAdmin(false)
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+    }
   }, [supabase])
 
   // Prevent body scroll when menu is open

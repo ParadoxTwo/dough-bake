@@ -36,6 +36,7 @@ export default function SignInPage() {
       return;
     }
 
+    // Auth state change will be handled by the Navbar's onAuthStateChange listener
     router.push(redirect);
     router.refresh();
   };
