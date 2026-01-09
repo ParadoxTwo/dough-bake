@@ -92,16 +92,18 @@ export default function ProfileInfoForm({
               Role
             </label>
             {isAdmin && isEditing && !isOwnProfile && onRoleChange && selectedRole !== undefined ? (
-              <div className="pr-8">
+              <div className="select-arrow">
                 <select
                   name="role"
                   value={selectedRole}
                   onChange={(e) => onRoleChange(e.target.value as 'customer' | 'admin')}
-                  className="w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 pr-10 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
                   style={{
                     border: '1px solid var(--theme-secondary)',
                     backgroundColor: 'var(--theme-background)',
                     color: 'var(--theme-text)',
+                    WebkitAppearance: 'none',
+                    appearance: 'none'
                   }}
                 >
                   <option value="customer">Customer</option>

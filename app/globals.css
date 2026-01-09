@@ -108,3 +108,22 @@ body {
     opacity: 0.4;
   }
 }
+
+/* Custom select arrow styles */
+.select-arrow {
+  position: relative;
+  display: block;
+}
+
+.select-arrow::after {
+  content: "▼";
+  font-size: 10px;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  position: absolute;
+  pointer-events: none;
+  color: var(--theme-primary);
+  z-index: 1;
+  line-height: 1;
+}
