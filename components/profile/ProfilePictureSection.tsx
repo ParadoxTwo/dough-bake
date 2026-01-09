@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import Card from '@/components/ui/Card'
+import ImageModal from '@/components/ui/ImageModal'
 
 interface ProfilePictureSectionProps {
   profilePicture: string | null
@@ -34,6 +35,7 @@ export default function ProfilePictureSection({
   onPasswordReset,
 }: ProfilePictureSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const getInitials = (name: string) => {
     return name
@@ -71,7 +73,11 @@ export default function ProfilePictureSection({
       <div className="flex flex-col items-center p-6">
         <div className="relative mb-4">
           {profilePicture ? (
-            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4" style={{ borderColor: 'var(--theme-primary)' }}>
+            <div 
+              className="relative w-32 h-32 rounded-full overflow-hidden border-4 cursor-pointer transition-transform hover:scale-105" 
+              style={{ borderColor: 'var(--theme-primary)' }}
+              onClick={() => setIsModalOpen(true)}
+            >
               <Image
                 src={profilePicture}
                 alt={displayName}
@@ -95,7 +101,10 @@ export default function ProfilePictureSection({
           {isOwnProfile && (
             <div className="absolute bottom-0 right-0">
               <button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  fileInputRef.current?.click()
+                }}
                 disabled={isUploading}
                 className="p-2 rounded-full shadow-lg transition-transform hover:scale-110"
                 style={{ backgroundColor: 'var(--theme-primary)', color: 'white' }}
@@ -120,6 +129,15 @@ export default function ProfilePictureSection({
             className="hidden"
           />
         </div>
+
+        {profilePicture && (
+          <ImageModal
+            imageUrl={profilePicture}
+            alt={`${displayName}'s profile picture`}
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+          />
+        )}
 
         <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--theme-text)' }}>
           {displayName}
