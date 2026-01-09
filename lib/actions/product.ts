@@ -1,11 +1,13 @@
 'use server'
 
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Product } from '@/lib/types/product'
 import { ProductFormData, ProductWithVariants } from '@/lib/types/variant'
 import { Database } from '@/lib/types/database.types'
 import { generateUniqueProductSlug, generateUniqueVariantSlug } from '@/lib/utils/slug'
 import { uploadProductImage, saveProductImage } from '@/lib/utils/images'
+import { getCachedAdminStatus } from '@/lib/utils/query-optimization'
 
 type ProductRow = Database['public']['Tables']['products']['Row']
 type ProductInsert = Database['public']['Tables']['products']['Insert']
@@ -70,33 +72,33 @@ export async function getUniqueCategories(): Promise<string[]> {
 
 /**
  * Get products with their first image for listing pages
+ * Cached to avoid duplicate queries in the same request
  */
-export async function getProductsWithImages(): Promise<Array<Product & { firstImage?: ProductImageRow | null }>> {
+export const getProductsWithImages = cache(async (): Promise<Array<Product & { firstImage?: ProductImageRow | null }>> => {
   const supabase = await createClient()
 
-  const { data: products, error: productsError } = await supabase
-    .from('products')
-    .select('*')
-    .eq('available', true)
-    .order('category', { ascending: true })
+  // Fetch products and images in parallel
+  const [productsResult, imagesResult] = await Promise.all([
+    supabase
+      .from('products')
+      .select('*')
+      .eq('available', true)
+      .order('category', { ascending: true }),
+    supabase
+      .from('product_images')
+      .select('*')
+      .is('variant_id', null)
+      .order('display_order', { ascending: true }),
+  ])
+
+  const { data: products, error: productsError } = productsResult
+  const { data: images } = imagesResult
 
   if (productsError || !products) {
     return []
   }
 
   const typedProducts: ProductRow[] = (products || []) as ProductRow[]
-
-  // Get first image for each product
-  const productIds = typedProducts.map((p) => p.id)
-  const { data: images } = productIds.length > 0
-    ? await supabase
-        .from('product_images')
-        .select('*')
-        .in('product_id', productIds)
-        .is('variant_id', null)
-        .order('display_order', { ascending: true })
-    : { data: null }
-
   const typedImages: ProductImageRow[] = (images || []) as ProductImageRow[]
 
   // Group images by product_id and get the first one
@@ -112,44 +114,49 @@ export async function getProductsWithImages(): Promise<Array<Product & { firstIm
     ...product,
     firstImage: imagesByProductId.get(product.id) || null,
   })) as Array<Product & { firstImage?: ProductImageRow | null }>
-}
+})
 
 /**
  * Get product with variants and images by ID
+ * Optimized with parallel queries and caching
  */
-export async function getProductWithDetails(id: string): Promise<ProductWithVariants | null> {
+export const getProductWithDetails = cache(async (id: string): Promise<ProductWithVariants | null> => {
   const supabase = await createClient()
 
-  const { data: product, error: productError } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .single()
-  
+  // Fetch product, variants, and product images in parallel
+  const [productResult, variantsResult, productImagesResult] = await Promise.all([
+    supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('product_variants')
+      .select('*')
+      .eq('product_id', id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('product_images')
+      .select('*')
+      .eq('product_id', id)
+      .is('variant_id', null)
+      .order('display_order', { ascending: true }),
+  ])
+
+  const { data: product, error: productError } = productResult
+  const { data: variants } = variantsResult
+  const { data: productImages } = productImagesResult
+
   const typedProduct = product as ProductRow | null
 
   if (productError || !typedProduct) {
     return null
   }
 
-  // Get variants
-  const { data: variants } = await supabase
-    .from('product_variants')
-    .select('*')
-    .eq('product_id', id)
-    .order('created_at', { ascending: true })
   const typedVariants: ProductVariantRow[] = (variants || []) as ProductVariantRow[]
-
-  // Get product images
-  const { data: productImages } = await supabase
-    .from('product_images')
-    .select('*')
-    .eq('product_id', id)
-    .is('variant_id', null)
-    .order('display_order', { ascending: true })
   const typedProductImages: ProductImageRow[] = (productImages || []) as ProductImageRow[]
 
-  // Get variant images
+  // Get variant images in parallel if we have variants
   const variantIds = typedVariants.map((v) => v.id)
   const { data: variantImages } = variantIds.length > 0
     ? await supabase
@@ -172,7 +179,7 @@ export async function getProductWithDetails(id: string): Promise<ProductWithVari
     images: typedProductImages,
   }
   return productWithDetails
-}
+})
 
 /**
  * Create a product directly (no API route needed)
@@ -180,19 +187,9 @@ export async function getProductWithDetails(id: string): Promise<ProductWithVari
 export async function createProduct(formData: ProductFormData): Promise<{ productId: string; slug: string }> {
   const supabase = await createClient()
 
-  // Verify admin access
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if ((profile as ProfileRow | null)?.role !== 'admin') {
+  // Verify admin access using cached check
+  const isAdmin = await getCachedAdminStatus()
+  if (!isAdmin) {
     throw new Error('Unauthorized: Admin access required')
   }
 
@@ -326,19 +323,9 @@ export async function updateProduct(
 ): Promise<void> {
   const supabase = await createClient()
 
-  // Verify admin access
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if ((profile as ProfileRow | null)?.role !== 'admin') {
+  // Verify admin access using cached check
+  const isAdmin = await getCachedAdminStatus()
+  if (!isAdmin) {
     throw new Error('Unauthorized: Admin access required')
   }
 
@@ -392,19 +379,9 @@ export async function updateVariant(
 ): Promise<void> {
   const supabase = await createClient()
 
-  // Verify admin access
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if ((profile as ProfileRow | null)?.role !== 'admin') {
+  // Verify admin access using cached check
+  const isAdmin = await getCachedAdminStatus()
+  if (!isAdmin) {
     throw new Error('Unauthorized: Admin access required')
   }
 
@@ -445,19 +422,9 @@ export async function updateVariant(
 export async function deleteVariant(variantId: string): Promise<void> {
   const supabase = await createClient()
 
-  // Verify admin access
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if ((profile as ProfileRow | null)?.role !== 'admin') {
+  // Verify admin access using cached check
+  const isAdmin = await getCachedAdminStatus()
+  if (!isAdmin) {
     throw new Error('Unauthorized: Admin access required')
   }
 
@@ -487,19 +454,9 @@ export async function createVariant(
 ): Promise<{ id: string }> {
   const supabase = await createClient()
 
-  // Verify admin access
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if ((profile as ProfileRow | null)?.role !== 'admin') {
+  // Verify admin access using cached check
+  const isAdmin = await getCachedAdminStatus()
+  if (!isAdmin) {
     throw new Error('Unauthorized: Admin access required')
   }
 
@@ -581,19 +538,9 @@ export async function createVariant(
 export async function deleteProduct(productId: string): Promise<void> {
   const supabase = await createClient()
 
-  // Verify admin access
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    throw new Error('Unauthorized')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if ((profile as ProfileRow | null)?.role !== 'admin') {
+  // Verify admin access using cached check
+  const isAdmin = await getCachedAdminStatus()
+  if (!isAdmin) {
     throw new Error('Unauthorized: Admin access required')
   }
 

@@ -47,47 +47,56 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const productsResult = await supabase
-    .from("products")
-    .select(`
-      *,
-      product_variants (
-        id,
-        name,
-        product_id
-      )
-    `)
-    .order("created_at", { ascending: false });
+  // Execute all data fetching queries in parallel for better performance
+  const [
+    productsResult,
+    ordersResult,
+    totalOrdersResult,
+    pendingOrdersResult,
+    revenueResult,
+  ] = await Promise.all([
+    supabase
+      .from("products")
+      .select(`
+        *,
+        product_variants (
+          id,
+          name,
+          product_id
+        )
+      `)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("orders")
+      .select(`
+        *,
+        customers (
+          name,
+          user_id
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(10),
+    supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true }),
+    supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending"),
+    supabase
+      .from("orders")
+      .select("total_amount")
+      .eq("payment_status", PaymentStatus.COMPLETED),
+  ]);
+
   const products = productsResult.data as (ProductRow & {
     product_variants: Array<{ id: string; name: string; product_id: string }> | null;
   })[] | null;
 
-  const ordersResult = await supabase
-    .from("orders")
-    .select(`
-      *,
-      customers (
-        name,
-        user_id
-      )
-    `)
-    .order("created_at", { ascending: false })
-    .limit(10);
   const orders = ordersResult.data as OrderWithCustomer[] | null;
-
-  const { count: totalOrders } = await supabase
-    .from("orders")
-    .select("*", { count: "exact", head: true });
-
-  const { count: pendingOrders } = await supabase
-    .from("orders")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
-
-  const revenueResult = await supabase
-    .from("orders")
-    .select("total_amount")
-    .eq("payment_status", PaymentStatus.COMPLETED);
+  const { count: totalOrders } = totalOrdersResult;
+  const { count: pendingOrders } = pendingOrdersResult;
   const revenueData = revenueResult.data as Pick<OrderRow, 'total_amount'>[] | null;
 
   const totalRevenue = revenueData?.reduce(

@@ -197,6 +197,7 @@ export default function ProductImage({
             alt={currentImage.alt_text || product.name}
             className="w-full h-full object-cover"
             loading="eager"
+            fetchPriority="high"
           />
         )}
 

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/types/database.types'
 import type { PaymentProvider, PaymentConfig } from '@/lib/payment/types'
+import { getCachedAdminStatus } from '@/lib/utils/query-optimization'
 
 type SiteSettingsInsert = Database['public']['Tables']['site_settings']['Insert']
 
@@ -10,31 +11,31 @@ export async function getPaymentSettings(): Promise<PaymentConfig | null> {
   const supabase = await createClient()
 
   try {
-    // Get payment provider
-    const { data: providerData } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'payment_provider')
-      .single()
-    
+    // Fetch all payment settings in parallel
+    const [providerResult, configResult, enabledResult] = await Promise.all([
+      supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'payment_provider')
+        .single(),
+      supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'payment_config')
+        .single(),
+      supabase
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'payment_enabled')
+        .single(),
+    ])
+
+    const { data: providerData } = providerResult
+    const { data: configData } = configResult
+    const { data: enabledData } = enabledResult
+
     const typedProviderData = providerData as { value: string } | null
-
-    // Get payment config (stored as JSON)
-    const { data: configData } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'payment_config')
-      .single()
-    
     const typedConfigData = configData as { value: string } | null
-
-    // Get payment enabled status
-    const { data: enabledData } = await supabase
-      .from('site_settings')
-      .select('value')
-      .eq('key', 'payment_enabled')
-      .single()
-    
     const typedEnabledData = enabledData as { value: string } | null
 
     if (!typedProviderData?.value) {
@@ -69,21 +70,9 @@ export async function updatePaymentSettings(
   const supabase = await createClient()
 
   try {
-    // Verify admin access
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return { success: false, error: 'Unauthorized' }
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-    
-    const typedProfile = profile as { role: 'customer' | 'admin' } | null
-
-    if (typedProfile?.role !== 'admin') {
+    // Verify admin access using cached check
+    const isAdmin = await getCachedAdminStatus()
+    if (!isAdmin) {
       return { success: false, error: 'Admin access required' }
     }
 

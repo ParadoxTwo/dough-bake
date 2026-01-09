@@ -27,12 +27,13 @@ export default function ProductGrid({
 
   return (
     <div className={`grid ${gridCols[columns]} gap-8`}>
-      {products.map((product) => (
+      {products.map((product, index) => (
         <ProductCard
           key={product.id}
           product={product}
           showCategory={showCategory}
           variant={variant}
+          priority={index < 6} // Prioritize first 6 products (above the fold)
         />
       ))}
     </div>

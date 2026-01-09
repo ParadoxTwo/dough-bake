@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getCachedUserAndProfile, getCachedAdminStatus } from '@/lib/utils/query-optimization'
 
 export interface UserProfile {
   id: string
@@ -24,85 +25,33 @@ export interface UserProfileWithCustomer extends UserProfile {
 /**
  * Get current user and their profile (including admin status)
  * Returns null if not authenticated
+ * Uses caching to avoid duplicate queries in the same request
  */
 export async function getCurrentUserProfile(): Promise<{
   user: { id: string; email?: string } | null
   profile: UserProfile | null
   isAdmin: boolean
 } | null> {
-  const supabase = await createClient()
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return {
-      user: null,
-      profile: null,
-      isAdmin: false,
-    }
-  }
-
-  // Fetch profile from database
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id, email, username, profile_picture_url, role')
-    .eq('id', user.id)
-    .maybeSingle()
-  
-  const typedProfile = profile as { 
-    id: string
-    email: string
-    username: string | null
-    profile_picture_url: string | null
-    role: 'customer' | 'admin'
-  } | null
-
-  if (profileError) {
-    console.error('Error fetching profile:', profileError)
-    // Return user info but no profile if there's an error
-    return {
-      user: { id: user.id, email: user.email },
-      profile: null,
-      isAdmin: false,
-    }
-  }
-
-  return {
-    user: { id: user.id, email: user.email },
-    profile: typedProfile ? {
-      id: typedProfile.id,
-      email: typedProfile.email,
-      username: typedProfile.username,
-      profile_picture_url: typedProfile.profile_picture_url,
-      role: typedProfile.role as 'customer' | 'admin',
-    } : null,
-    isAdmin: typedProfile?.role === 'admin',
-  }
+  // Use cached version to avoid duplicate queries in the same request
+  return getCachedUserAndProfile()
 }
 
 /**
  * Get user profile with customer details by user ID
  * Admins can view any user, regular users can only view themselves
+ * Optimized with cached auth check and parallel queries
  */
 export async function getUserProfile(userId: string): Promise<UserProfileWithCustomer | null> {
   const supabase = await createClient()
 
-  // Check authentication
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  // Use cached user/profile check
+  const currentUserData = await getCachedUserAndProfile()
+  if (!currentUserData.user) {
     return null
   }
 
-  // Check if user is admin or viewing their own profile
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  const typedCurrentProfile = currentProfile as { role: 'customer' | 'admin' } | null
-  const isAdmin = typedCurrentProfile?.role === 'admin'
-  const isOwnProfile = user.id === userId
+  const isAdmin = currentUserData.isAdmin
+  const isOwnProfile = currentUserData.user.id === userId
 
   if (!isAdmin && !isOwnProfile) {
     return null // Unauthorized
@@ -151,25 +100,18 @@ export async function getUserProfile(userId: string): Promise<UserProfileWithCus
 /**
  * Get user profile with customer details by username
  * Admins can view any user, regular users can only view themselves
+ * Optimized with cached auth check and parallel queries
  */
 export async function getUserProfileByUsername(username: string): Promise<UserProfileWithCustomer | null> {
   const supabase = await createClient()
 
-  // Check authentication
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  // Use cached user/profile check
+  const currentUserData = await getCachedUserAndProfile()
+  if (!currentUserData.user) {
     return null
   }
 
-  // Check if user is admin
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  const typedCurrentProfile = currentProfile as { role: 'customer' | 'admin' } | null
-  const isAdmin = typedCurrentProfile?.role === 'admin'
+  const isAdmin = currentUserData.isAdmin
 
   // Fetch profile by username (case-insensitive)
   // Note: We fetch customer separately due to RLS policy issues with relationship queries
@@ -191,7 +133,7 @@ export async function getUserProfileByUsername(username: string): Promise<UserPr
     role: 'customer' | 'admin'
   }
 
-  const isOwnProfile = user.id === typedProfile.id
+  const isOwnProfile = currentUserData.user.id === typedProfile.id
 
   // Check permission: admin can view any profile, users can only view their own
   if (!isAdmin && !isOwnProfile) {
@@ -218,6 +160,7 @@ export async function getUserProfileByUsername(username: string): Promise<UserPr
 /**
  * Update user profile and customer information
  * Admins can update any user, regular users can only update themselves
+ * Optimized with cached auth check
  */
 export async function updateUserProfile(
   userId: string,
@@ -235,22 +178,14 @@ export async function updateUserProfile(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
 
-  // Check authentication
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
+  // Use cached user/profile check
+  const currentUserData = await getCachedUserAndProfile()
+  if (!currentUserData.user) {
     return { success: false, error: 'Unauthorized' }
   }
 
-  // Check if user is admin or updating their own profile
-  const { data: currentProfile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  const typedCurrentProfile = currentProfile as { role: 'customer' | 'admin' } | null
-  const isAdmin = typedCurrentProfile?.role === 'admin'
-  const isOwnProfile = user.id === userId
+  const isAdmin = currentUserData.isAdmin
+  const isOwnProfile = currentUserData.user.id === userId
 
   if (!isAdmin && !isOwnProfile) {
     return { success: false, error: 'Forbidden' }

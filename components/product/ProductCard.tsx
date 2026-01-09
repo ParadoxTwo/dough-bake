@@ -15,8 +15,9 @@ export default function ProductCard({
   product, 
   href = `/product/${product.id}`,
   showCategory = false,
-  variant = 'default'
-}: ProductCardProps) {
+  variant = 'default',
+  priority = false
+}: ProductCardProps & { priority?: boolean }) {
   const router = useRouter()
   const { formatPrice, convertPrice } = useCurrency()
   const [addingToCart, setAddingToCart] = useState(false)
@@ -71,6 +72,7 @@ export default function ProductCard({
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               unoptimized={isLocalSupabaseUrl(product.firstImage.medium_url)}
+              priority={priority}
             />
           </div>
         ) : (
