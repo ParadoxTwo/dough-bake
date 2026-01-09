@@ -41,6 +41,7 @@ export default function ProfilePageClient({
   const [sendingReset, setSendingReset] = useState(false)
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState('')
+  const [selectedRole, setSelectedRole] = useState<'customer' | 'admin'>(profile.role)
 
   // Update form data when profile changes (e.g., after refresh)
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function ProfilePageClient({
       postal_code: profile.customer?.postal_code || '',
     })
     setProfilePicture(profile.profile_picture_url)
+    setSelectedRole(profile.role)
   }, [profile])
 
   const handlePictureChange = async (file: File) => {
@@ -121,7 +123,17 @@ export default function ProfilePageClient({
     setSuccess('')
 
     try {
-      const result = await updateUserProfile(profile.id, {
+      const updates: {
+        customer?: {
+          name?: string
+          phone?: string | null
+          address?: string | null
+          city?: string | null
+          state?: string | null
+          postal_code?: string | null
+        }
+        role?: 'customer' | 'admin'
+      } = {
         customer: {
           name: formData.name.trim(),
           phone: formData.phone.trim() || null,
@@ -130,7 +142,14 @@ export default function ProfilePageClient({
           state: formData.state.trim() || null,
           postal_code: formData.postal_code.trim() || null,
         },
-      })
+      }
+
+      // Include role change if admin is editing another user and role changed
+      if (isAdmin && !isOwnProfile && selectedRole !== profile.role) {
+        updates.role = selectedRole
+      }
+
+      const result = await updateUserProfile(profile.id, updates)
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to update profile')
@@ -210,6 +229,11 @@ export default function ProfilePageClient({
       state: profile.customer?.state || '',
       postal_code: profile.customer?.postal_code || '',
     })
+    setSelectedRole(profile.role)
+  }
+
+  const handleRoleChange = (role: 'customer' | 'admin') => {
+    setSelectedRole(role)
   }
 
   const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
@@ -279,10 +303,13 @@ export default function ProfilePageClient({
           <ProfileInfoForm
             profile={profile}
             formData={formData}
+            selectedRole={selectedRole}
             isEditing={isEditing}
             isSaving={isSaving}
             isOwnProfile={isOwnProfile}
+            isAdmin={isAdmin}
             onFormDataChange={handleFormDataChange}
+            onRoleChange={isAdmin && !isOwnProfile ? handleRoleChange : undefined}
             onEditToggle={handleEditToggle}
             onSave={handleSave}
             onCancel={handleCancel}

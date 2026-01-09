@@ -230,6 +230,7 @@ export async function updateUserProfile(
       state?: string | null
       postal_code?: string | null
     }
+    role?: 'customer' | 'admin'
   }
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
@@ -253,6 +254,31 @@ export async function updateUserProfile(
 
   if (!isAdmin && !isOwnProfile) {
     return { success: false, error: 'Forbidden' }
+  }
+
+  // Only admins can change roles, and they cannot change their own role
+  if (updates.role !== undefined) {
+    if (!isAdmin) {
+      return { success: false, error: 'Only admins can change user roles' }
+    }
+    if (isOwnProfile) {
+      return { success: false, error: 'You cannot change your own role' }
+    }
+
+    // Update role in profiles table
+    const profilesUpdateQuery = supabase.from('profiles') as unknown as {
+      update: (values: { role: 'customer' | 'admin' }) => {
+        eq: (column: string, value: string) => Promise<{ error: { message: string } | null }>
+      }
+    }
+    
+    const { error: roleError } = await profilesUpdateQuery
+      .update({ role: updates.role })
+      .eq('id', userId)
+
+    if (roleError) {
+      return { success: false, error: roleError.message }
+    }
   }
 
   // Update customer information if provided

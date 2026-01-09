@@ -15,10 +15,13 @@ interface ProfileInfoFormProps {
     state: string
     postal_code: string
   }
+  selectedRole?: 'customer' | 'admin'
   isEditing: boolean
   isSaving: boolean
   isOwnProfile: boolean
+  isAdmin: boolean
   onFormDataChange: (field: string, value: string) => void
+  onRoleChange?: (role: 'customer' | 'admin') => void
   onEditToggle: () => void
   onSave: () => Promise<void>
   onCancel: () => void
@@ -27,10 +30,13 @@ interface ProfileInfoFormProps {
 export default function ProfileInfoForm({
   profile,
   formData,
+  selectedRole,
   isEditing,
   isSaving,
   isOwnProfile,
+  isAdmin,
   onFormDataChange,
+  onRoleChange,
   onEditToggle,
   onSave,
   onCancel,
@@ -42,7 +48,7 @@ export default function ProfileInfoForm({
           <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>
             Profile Information
           </h3>
-          {isOwnProfile && (
+          {(isOwnProfile || isAdmin) && (
             <Button
               variant="ghost"
               size="sm"
@@ -85,13 +91,32 @@ export default function ProfileInfoForm({
             <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
               Role
             </label>
-            <Input
-              type="text"
-              name="role"
-              value={profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
-              disabled
-              className="opacity-60"
-            />
+            {isAdmin && isEditing && !isOwnProfile && onRoleChange && selectedRole !== undefined ? (
+              <div className="pr-8">
+                <select
+                  name="role"
+                  value={selectedRole}
+                  onChange={(e) => onRoleChange(e.target.value as 'customer' | 'admin')}
+                  className="w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
+                  style={{
+                    border: '1px solid var(--theme-secondary)',
+                    backgroundColor: 'var(--theme-background)',
+                    color: 'var(--theme-text)',
+                  }}
+                >
+                  <option value="customer">Customer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+            ) : (
+              <Input
+                type="text"
+                name="role"
+                value={profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
+                disabled
+                className="opacity-60"
+              />
+            )}
           </div>
 
           <div>
@@ -103,7 +128,7 @@ export default function ProfileInfoForm({
               name="name"
               value={formData.name}
               onChange={(e) => onFormDataChange('name', e.target.value)}
-              disabled={!isEditing || !isOwnProfile}
+              disabled={!isEditing || (!isOwnProfile && !isAdmin)}
               placeholder="Enter your full name"
             />
           </div>
@@ -117,7 +142,7 @@ export default function ProfileInfoForm({
               name="phone"
               value={formData.phone}
               onChange={(e) => onFormDataChange('phone', e.target.value)}
-              disabled={!isEditing || !isOwnProfile}
+              disabled={!isEditing || (!isOwnProfile && !isAdmin)}
               placeholder="Enter your phone number"
             />
           </div>
@@ -131,7 +156,7 @@ export default function ProfileInfoForm({
               name="address"
               value={formData.address}
               onChange={(e) => onFormDataChange('address', e.target.value)}
-              disabled={!isEditing || !isOwnProfile}
+              disabled={!isEditing || (!isOwnProfile && !isAdmin)}
               placeholder="Enter your address"
             />
           </div>
@@ -146,7 +171,7 @@ export default function ProfileInfoForm({
                 name="city"
                 value={formData.city}
                 onChange={(e) => onFormDataChange('city', e.target.value)}
-                disabled={!isEditing || !isOwnProfile}
+                disabled={!isEditing || (!isOwnProfile && !isAdmin)}
                 placeholder="Enter your city"
               />
             </div>
@@ -160,7 +185,7 @@ export default function ProfileInfoForm({
                 name="state"
                 value={formData.state}
                 onChange={(e) => onFormDataChange('state', e.target.value)}
-                disabled={!isEditing || !isOwnProfile}
+                disabled={!isEditing || (!isOwnProfile && !isAdmin)}
                 placeholder="Enter your state"
               />
             </div>
@@ -175,12 +200,12 @@ export default function ProfileInfoForm({
               name="postal_code"
               value={formData.postal_code}
               onChange={(e) => onFormDataChange('postal_code', e.target.value)}
-              disabled={!isEditing || !isOwnProfile}
+              disabled={!isEditing || (!isOwnProfile && !isAdmin)}
               placeholder="Enter your postal code"
             />
           </div>
 
-          {isEditing && isOwnProfile && (
+          {isEditing && (isOwnProfile || isAdmin) && (
             <div className="flex justify-end gap-3 pt-4">
               <Button
                 variant="ghost"
