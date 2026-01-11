@@ -26,7 +26,7 @@ export default function Navbar() {
 
   useEffect(() => {
     let isMounted = true
-    let hasInitialState = false
+    const hasInitialStateRef = { current: false }
 
     const fetchUserProfile = async (userId: string) => {
       try {
@@ -53,6 +53,13 @@ export default function Navbar() {
       }
     }
 
+    const setInitialState = () => {
+      if (!hasInitialStateRef.current) {
+        hasInitialStateRef.current = true
+        setLoading(false)
+      }
+    }
+
     // Listen for auth state changes - this is the primary source of truth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted) return
@@ -61,16 +68,17 @@ export default function Navbar() {
       
       setUser(session?.user ?? null)
       
-      if (session?.user) {
-        await fetchUserProfile(session.user.id)
-      } else {
+      try {
+        if (session?.user) {
+          await fetchUserProfile(session.user.id)
+        } else {
+          setIsAdmin(false)
+        }
+      } catch (error) {
+        console.error('Error in auth state change handler:', error)
         setIsAdmin(false)
-      }
-      
-      // Set loading to false once we have initial auth state
-      if (!hasInitialState) {
-        hasInitialState = true
-        setLoading(false)
+      } finally {
+        setInitialState()
       }
     })
 
@@ -80,7 +88,7 @@ export default function Navbar() {
       if (!isMounted) return
 
       // Only use this if auth state change hasn't fired yet
-      if (!hasInitialState) {
+      if (!hasInitialStateRef.current) {
         if (authError) {
           // AuthSessionMissingError is expected when user is not logged in - don't log as error
           const isSessionMissing = authError.name === 'AuthSessionMissingError' || 
@@ -92,25 +100,28 @@ export default function Navbar() {
           
           setUser(null)
           setIsAdmin(false)
+          setInitialState()
         } else {
           setUser(authUser || null)
           if (authUser) {
             fetchUserProfile(authUser.id)
+              .then(() => setInitialState())
+              .catch((error) => {
+                console.error('Error fetching profile in getUser fallback:', error)
+                setInitialState()
+              })
           } else {
             setIsAdmin(false)
+            setInitialState()
           }
         }
-        
-        hasInitialState = true
-        setLoading(false)
       }
     }).catch((error) => {
       console.error('Error fetching user:', error)
-      if (isMounted && !hasInitialState) {
+      if (isMounted && !hasInitialStateRef.current) {
         setUser(null)
         setIsAdmin(false)
-        setLoading(false)
-        hasInitialState = true
+        setInitialState()
       }
     })
 
