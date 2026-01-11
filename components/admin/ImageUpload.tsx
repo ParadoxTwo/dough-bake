@@ -51,9 +51,11 @@ export default function ImageUpload({
     fileInputRef.current?.click()
   }
 
+  const inputId = `image-upload-${label.toLowerCase().replace(/\s+/g, '-')}`
+
   return (
     <div>
-      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text)' }}>
+      <label htmlFor={inputId} className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text)' }}>
         {label}
       </label>
       
@@ -67,12 +69,15 @@ export default function ImageUpload({
           onClick={handleClick}
         >
           <input
+            id={inputId}
+            name="images"
             ref={fileInputRef}
             type="file"
             accept="image/*"
             multiple
             onChange={handleFileSelect}
             className="hidden"
+            aria-label={label}
           />
           <div className="space-y-2">
             <svg

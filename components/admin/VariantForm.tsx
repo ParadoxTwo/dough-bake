@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import ImageUpload from './ImageUpload'
 import type { VariantFormData } from '@/lib/types/variant'
@@ -75,24 +76,16 @@ export default function VariantForm({
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text)' }}>
-            Stock Type
-          </label>
-          <select
-            value={variant.stockType}
-            onChange={(e) => updateField('stockType', e.target.value as 'unlimited' | 'limited')}
-            className="w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
-            style={{
-              border: '1px solid var(--theme-secondary)',
-              backgroundColor: 'var(--theme-background)',
-              color: 'var(--theme-text)',
-            }}
-          >
-            <option value="unlimited">Unlimited</option>
-            <option value="limited">Limited</option>
-          </select>
-        </div>
+        <Select
+          label="Stock Type"
+          name={`stockType-${index}`}
+          value={variant.stockType}
+          onChange={(e) => updateField('stockType', e.target.value as 'unlimited' | 'limited')}
+          options={[
+            { value: 'unlimited', label: 'Unlimited' },
+            { value: 'limited', label: 'Limited' },
+          ]}
+        />
 
         {variant.stockType === 'limited' && (
           <Input

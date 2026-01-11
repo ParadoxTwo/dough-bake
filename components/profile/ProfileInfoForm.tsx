@@ -3,6 +3,7 @@
 import { UserProfileWithCustomer } from '@/lib/actions/user'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import Card from '@/components/ui/Card'
 
 interface ProfileInfoFormProps {
@@ -88,28 +89,17 @@ export default function ProfileInfoForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text-secondary)' }}>
-              Role
-            </label>
             {isAdmin && isEditing && !isOwnProfile && onRoleChange && selectedRole !== undefined ? (
-              <div className="select-arrow">
-                <select
-                  name="role"
-                  value={selectedRole}
-                  onChange={(e) => onRoleChange(e.target.value as 'customer' | 'admin')}
-                  className="w-full px-4 py-3 pr-10 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
-                  style={{
-                    border: '1px solid var(--theme-secondary)',
-                    backgroundColor: 'var(--theme-background)',
-                    color: 'var(--theme-text)',
-                    WebkitAppearance: 'none',
-                    appearance: 'none'
-                  }}
-                >
-                  <option value="customer">Customer</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
+              <Select
+                label="Role"
+                name="role"
+                value={selectedRole}
+                onChange={(e) => onRoleChange(e.target.value as 'customer' | 'admin')}
+                options={[
+                  { value: 'customer', label: 'Customer' },
+                  { value: 'admin', label: 'Admin' },
+                ]}
+              />
             ) : (
               <Input
                 type="text"

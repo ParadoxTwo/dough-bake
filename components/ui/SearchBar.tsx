@@ -18,8 +18,13 @@ export default function SearchBar({
 }: SearchBarProps) {
   return (
     <div className={`relative ${className}`}>
+      <label htmlFor="search-input" className="sr-only">
+        Search: {placeholder}
+      </label>
       <input
-        type="text"
+        id="search-input"
+        name="search"
+        type="search"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -29,6 +34,7 @@ export default function SearchBar({
           backgroundColor: 'var(--theme-background)',
           color: 'var(--theme-text)',
         }}
+        aria-label="Search"
       />
       <svg
         className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none"

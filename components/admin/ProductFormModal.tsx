@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Input from '@/components/ui/Input'
+import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import ImageUpload from './ImageUpload'
 import VariantForm from './VariantForm'
@@ -198,24 +199,16 @@ export default function ProductFormModal({
                 required
               />
 
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--theme-text)' }}>
-                  Stock Type
-                </label>
-                <select
-                  value={formData.stockType}
-                  onChange={(e) => updateField('stockType', e.target.value as 'unlimited' | 'limited')}
-                  className="w-full px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-[var(--theme-accent)] focus:border-transparent transition-all"
-                  style={{
-                    border: '1px solid var(--theme-secondary)',
-                    backgroundColor: 'var(--theme-background)',
-                    color: 'var(--theme-text)',
-                  }}
-                >
-                  <option value="unlimited">Unlimited</option>
-                  <option value="limited">Limited</option>
-                </select>
-              </div>
+              <Select
+                label="Stock Type"
+                name="stockType"
+                value={formData.stockType}
+                onChange={(e) => updateField('stockType', e.target.value as 'unlimited' | 'limited')}
+                options={[
+                  { value: 'unlimited', label: 'Unlimited' },
+                  { value: 'limited', label: 'Limited' },
+                ]}
+              />
             </div>
 
             {formData.stockType === 'limited' && (

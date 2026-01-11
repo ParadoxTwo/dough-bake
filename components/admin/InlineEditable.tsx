@@ -106,11 +106,19 @@ export default function InlineEditable({
     }
   }
 
+  const generatedId = label ? `inline-edit-${label.toLowerCase().replace(/\s+/g, '-')}` : `inline-edit-${Math.random().toString(36).substr(2, 9)}`
+  const fieldName = label ? label.toLowerCase().replace(/\s+/g, '-') : 'inline-edit'
+
   if (isEditing) {
     return (
       <div className={`relative ${className}`}>
+        <label htmlFor={generatedId} className="sr-only">
+          {label || `Edit field: ${fieldName}`}
+        </label>
         {multiline ? (
           <textarea
+            id={generatedId}
+            name={fieldName}
             ref={inputRef as React.RefObject<HTMLTextAreaElement>}
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
@@ -123,9 +131,12 @@ export default function InlineEditable({
               color: 'var(--theme-text)',
             }}
             disabled={saving}
+            aria-label={label || 'Edit field'}
           />
         ) : (
           <input
+            id={generatedId}
+            name={fieldName}
             ref={inputRef as React.RefObject<HTMLInputElement>}
             type={type}
             value={editValue}
@@ -138,6 +149,7 @@ export default function InlineEditable({
               color: 'var(--theme-text)',
             }}
             disabled={saving}
+            aria-label={label || 'Edit field'}
           />
         )}
         
