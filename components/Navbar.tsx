@@ -26,7 +26,7 @@ export default function Navbar() {
 
   useEffect(() => {
     let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
+    let hasInitialState = false
 
     const fetchUserProfile = async (userId: string) => {
       try {
@@ -53,39 +53,34 @@ export default function Navbar() {
       }
     }
 
-    const getUser = async () => {
-      try {
-        // Add timeout to prevent hanging
-        const getUserPromise = supabase.auth.getUser()
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('Auth check timeout')), 5000)
-        })
+    // Listen for auth state changes - this is the primary source of truth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return
+      
+      console.log('Auth state changed:', event, session?.user?.email)
+      
+      setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        await fetchUserProfile(session.user.id)
+      } else {
+        setIsAdmin(false)
+      }
+      
+      // Set loading to false once we have initial auth state
+      if (!hasInitialState) {
+        hasInitialState = true
+        setLoading(false)
+      }
+    })
 
-        let authResult: { data: { user: any }, error: any }
-        try {
-          authResult = await Promise.race([
-            getUserPromise,
-            timeoutPromise,
-          ]) as { data: { user: any }, error: any }
-        } catch (timeoutError) {
-          console.error('Auth check timed out:', timeoutError)
-          if (isMounted) {
-            setUser(null)
-            setIsAdmin(false)
-            setLoading(false)
-          }
-          return
-        }
+    // Initial user fetch as fallback (without timeout - let it complete naturally)
+    // The auth state change listener above will handle most cases
+    supabase.auth.getUser().then(({ data: { user: authUser }, error: authError }) => {
+      if (!isMounted) return
 
-        if (timeoutId) {
-          clearTimeout(timeoutId)
-          timeoutId = null
-        }
-
-        if (!isMounted) return
-
-        const { data: { user: authUser }, error: authError } = authResult
-
+      // Only use this if auth state change hasn't fired yet
+      if (!hasInitialState) {
         if (authError) {
           // AuthSessionMissingError is expected when user is not logged in - don't log as error
           const isSessionMissing = authError.name === 'AuthSessionMissingError' || 
@@ -97,57 +92,30 @@ export default function Navbar() {
           
           setUser(null)
           setIsAdmin(false)
-          setLoading(false)
-          return
-        }
-
-        setUser(authUser || null)
-
-        if (authUser) {
-          await fetchUserProfile(authUser.id)
         } else {
-          setIsAdmin(false)
+          setUser(authUser || null)
+          if (authUser) {
+            fetchUserProfile(authUser.id)
+          } else {
+            setIsAdmin(false)
+          }
         }
-      } catch (error) {
-        console.error('Error fetching user:', error)
-        if (isMounted) {
-          setUser(null)
-          setIsAdmin(false)
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-        if (timeoutId) {
-          clearTimeout(timeoutId)
-        }
+        
+        hasInitialState = true
+        setLoading(false)
       }
-    }
-
-    // Initial user fetch
-    getUser()
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return
-      
-      console.log('Auth state changed:', event, session?.user?.email)
-      
-      setUser(session?.user ?? null)
-      setLoading(false) // Always set loading to false when auth state changes
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user.id)
-      } else {
+    }).catch((error) => {
+      console.error('Error fetching user:', error)
+      if (isMounted && !hasInitialState) {
+        setUser(null)
         setIsAdmin(false)
+        setLoading(false)
+        hasInitialState = true
       }
     })
 
     return () => {
       isMounted = false
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
       if (subscription) {
         subscription.unsubscribe()
       }
