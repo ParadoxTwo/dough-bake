@@ -39,7 +39,7 @@ export default async function ContactPage() {
                 className="text-lg hover:opacity-70 transition-opacity"
                 style={{ color: 'var(--theme-text-secondary)' }}
               >
-                hello@doughbake.com
+                payal@doughandbake.store
               </a>
             </div>
 
@@ -54,9 +54,8 @@ export default async function ContactPage() {
                 className="text-lg"
                 style={{ color: 'var(--theme-text-secondary)' }}
               >
-                Monday - Friday: 8:00 AM - 6:00 PM<br />
-                Saturday: 9:00 AM - 4:00 PM<br />
-                Sunday: Closed
+                Weekdays: 9:00 AM - 6:00 PM<br />
+                Weekends: 9:00 AM - 4:00 PM<br />
               </p>
             </div>
           </div>
@@ -95,25 +94,18 @@ export default async function ContactPage() {
           </p>
           <div className="flex gap-4">
             <a 
-              href="#" 
+              href="https://wa.me/918527296139?text=Hello, I would like to place an order for " 
               className="text-lg hover:opacity-70 transition-opacity"
               style={{ color: 'var(--theme-text-secondary)' }}
             >
-              Facebook
+              WhatsApp
             </a>
             <a 
-              href="#" 
+              href="https://www.instagram.com/_dough.bake/" 
               className="text-lg hover:opacity-70 transition-opacity"
               style={{ color: 'var(--theme-text-secondary)' }}
             >
               Instagram
-            </a>
-            <a 
-              href="#" 
-              className="text-lg hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--theme-text-secondary)' }}
-            >
-              Twitter
             </a>
           </div>
         </section>

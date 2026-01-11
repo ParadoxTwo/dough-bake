@@ -134,16 +134,16 @@ export default async function Footer() {
             <ul className="space-y-2">
               <li>
                 <a 
-                  href="#" 
+                  href="https://wa.me/918527296139?text=Hello, I would like to place an order for " 
                   className="text-sm hover:opacity-70 transition-opacity"
                   style={{ color: 'var(--theme-text-secondary)' }}
                 >
-                  Facebook
+                  WhatsApp
                 </a>
               </li>
               <li>
                 <a 
-                  href="#" 
+                  href="https://www.instagram.com/_dough.bake/" 
                   className="text-sm hover:opacity-70 transition-opacity"
                   style={{ color: 'var(--theme-text-secondary)' }}
                 >
@@ -152,16 +152,7 @@ export default async function Footer() {
               </li>
               <li>
                 <a 
-                  href="#" 
-                  className="text-sm hover:opacity-70 transition-opacity"
-                  style={{ color: 'var(--theme-text-secondary)' }}
-                >
-                  Twitter
-                </a>
-              </li>
-              <li>
-                <a 
-                  href="mailto:hello@doughbake.com" 
+                  href="mailto:payal@doughandbake.store?subject=Hello, I would like to place an order for " 
                   className="text-sm hover:opacity-70 transition-opacity"
                   style={{ color: 'var(--theme-text-secondary)' }}
                 >

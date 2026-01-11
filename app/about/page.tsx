@@ -40,8 +40,8 @@ export default async function AboutPage() {
             style={{ color: 'var(--theme-text-secondary)' }}
           >
             We believe that great baking starts with great ingredients. That's why we 
-            source only the finest organic and locally-sourced ingredients, ensuring 
-            every bite is as fresh and flavorful as possible. Our expert bakers combine 
+            source only the finest ingredients from trusted suppliers, ensuring 
+            every bite is as fresh and flavorful as possible. Our expert baker combines 
             time-honored techniques with modern care to deliver products that meet the 
             highest standards of quality and taste.
           </p>
@@ -60,15 +60,15 @@ export default async function AboutPage() {
           >
             <li className="flex items-start">
               <span className="mr-3">🌾</span>
-              <span>Fresh, locally-sourced organic ingredients</span>
+              <span>Fresh, high quality ingredients</span>
             </li>
             <li className="flex items-start">
               <span className="mr-3">👨‍🍳</span>
-              <span>Handcrafted by experienced artisan bakers</span>
+              <span>Handcrafted by expert baker</span>
             </li>
             <li className="flex items-start">
               <span className="mr-3">🚚</span>
-              <span>Same-day delivery for maximum freshness</span>
+              <span>Same-day delivery available for maximum freshness</span>
             </li>
             <li className="flex items-start">
               <span className="mr-3">❤️</span>

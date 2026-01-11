@@ -30,7 +30,7 @@ export default async function ShippingPage() {
                 style={{ color: 'var(--theme-text-secondary)' }}
               >
                 Orders placed before 12:00 PM can be delivered the same day. 
-                Delivery times vary by location and are typically between 2:00 PM and 6:00 PM.
+                Delivery times vary by location and are typically between 2:00 PM and 9:00 PM.
               </p>
             </div>
             <div>
@@ -44,8 +44,8 @@ export default async function ShippingPage() {
                 className="text-lg leading-relaxed"
                 style={{ color: 'var(--theme-text-secondary)' }}
               >
-                Orders placed after 12:00 PM will be delivered the next business day. 
-                We'll send you a confirmation email with your estimated delivery window.
+                Orders placed after 12:00 PM will be delivered the next business day.
+                Delivery times vary by location and are typically between 9:00 AM and 9:00 PM.
               </p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export default async function ShippingPage() {
             className="text-lg leading-relaxed mb-4"
             style={{ color: 'var(--theme-text-secondary)' }}
           >
-            We currently deliver within a 20-mile radius of our bakery. During checkout, 
+            We currently deliver within a 25km radius of our bakery. During checkout, 
             you can enter your address to check if we deliver to your area. We're 
             constantly expanding our delivery zones, so check back if we don't currently 
             serve your location.
@@ -82,7 +82,7 @@ export default async function ShippingPage() {
                 className="text-lg"
                 style={{ color: 'var(--theme-text-secondary)' }}
               >
-                Orders over $50
+                Orders over ₹2000
               </span>
               <span 
                 className="text-lg font-semibold"
@@ -96,13 +96,13 @@ export default async function ShippingPage() {
                 className="text-lg"
                 style={{ color: 'var(--theme-text-secondary)' }}
               >
-                Orders under $50
+                Orders under ₹2000
               </span>
               <span 
                 className="text-lg font-semibold"
                 style={{ color: 'var(--theme-text)' }}
               >
-                $5.99
+                ₹60-₹100
               </span>
             </div>
           </div>
@@ -136,10 +136,9 @@ export default async function ShippingPage() {
             className="text-lg leading-relaxed"
             style={{ color: 'var(--theme-text-secondary)' }}
           >
-            All our products are carefully packaged to maintain freshness during transit. 
-            We use eco-friendly packaging materials and ensure that your baked goods arrive 
-            in perfect condition. Items are baked fresh on the day of delivery to ensure 
-            maximum quality and flavor.
+            All our products are carefully packed to maintain freshness during transit. 
+            We ensure that your baked goods arrive in perfect condition. 
+            Items are baked fresh to ensure maximum quality and flavor.
           </p>
         </section>
 

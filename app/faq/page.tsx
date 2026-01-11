@@ -21,7 +21,7 @@ export default async function FAQPage() {
     },
     {
       question: "How should I store my baked goods?",
-      answer: "Most of our products are best enjoyed fresh on the day of delivery. If you need to store them, keep them in an airtight container at room temperature. Some items may be frozen for longer storage."
+      answer: "Most of our products are best enjoyed fresh on the day of delivery. If you need to store them, keep them in an airtight container at cool temperature. Some items may be frozen for longer storage."
     },
     {
       question: "Do you accommodate dietary restrictions?",
@@ -33,7 +33,7 @@ export default async function FAQPage() {
     },
     {
       question: "Can I modify or cancel my order?",
-      answer: "Orders can be modified or cancelled within 2 hours of placement, provided they haven't entered production. Contact us as soon as possible if you need to make changes."
+      answer: "Orders can be modified or cancelled within an hour of placement, provided they haven't entered production. Contact us as soon as possible if you need to make changes."
     }
   ];
 
