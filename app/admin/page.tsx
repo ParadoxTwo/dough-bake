@@ -15,6 +15,7 @@ import AdminProductsList from "@/components/admin/AdminProductsList";
 import CurrencyManager from "@/components/admin/CurrencyManager";
 import PaymentManager from "@/components/admin/PaymentManager";
 import DeliveryManager from "@/components/admin/DeliveryManager";
+import SetupChecklist from "@/components/admin/SetupChecklist";
 import CurrencyText from "@/components/ui/CurrencyText";
 import type { Database } from "@/lib/types/database.types";
 import { PaymentStatus } from "@/lib/types/payment";
@@ -112,6 +113,8 @@ export default async function AdminPage() {
         subtitle="Manage products, orders, and view analytics"
         className="mb-8"
       />
+
+      <SetupChecklist />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <StatCard label="Total Products" value={products?.length || 0} />
