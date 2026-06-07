@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/types/database.types'
 import type { DeliveryProvider, DeliveryConfig } from '@/lib/delivery/types'
+import { enqueueCreateDelivery } from '@/lib/delivery/dispatch'
 import { getCachedAdminStatus } from '@/lib/utils/query-optimization'
 
 type SiteSettingsInsert = Database['public']['Tables']['site_settings']['Insert']
@@ -91,5 +92,36 @@ export async function updateDeliverySettings(
   } catch (error: any) {
     console.error('Error updating delivery settings:', error)
     return { success: false, error: error.message || 'Failed to update delivery settings' }
+  }
+}
+
+/**
+ * Client-callable action that enqueues a delivery for an order the caller owns.
+ * Used by the checkout no-payment branch. Ownership is enforced via RLS (the
+ * caller can only see their own orders) before the privileged enqueue runs.
+ */
+export async function enqueueDeliveryForOrder(
+  orderId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Unauthorized' }
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('id', orderId)
+    .single()
+  if (!order) return { success: false, error: 'Order not found' }
+
+  try {
+    await enqueueCreateDelivery(orderId)
+    return { success: true }
+  } catch (error: any) {
+    console.error('Failed to enqueue delivery:', error)
+    return { success: false, error: error.message || 'Failed to enqueue delivery' }
   }
 }

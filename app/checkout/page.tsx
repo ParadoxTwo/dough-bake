@@ -17,6 +17,7 @@ import { useCurrency } from "@/lib/currency/context";
 import type { PaymentProvider } from "@/lib/payment/types";
 import PaymentForm from "@/components/payment/PaymentForm";
 import { PaymentStatus } from "@/lib/types/payment";
+import { enqueueDeliveryForOrder } from "@/lib/actions/delivery";
 
 interface CustomerInfo {
   name: string;
@@ -231,6 +232,13 @@ export default function CheckoutPage() {
         await ordersUpdateQuery
           .update(updateData)
           .eq("id", order.id);
+
+        // Dispatch delivery (best-effort; never blocks order completion).
+        try {
+          await enqueueDeliveryForOrder(order.id);
+        } catch (deliveryError) {
+          console.error("Failed to enqueue delivery:", deliveryError);
+        }
 
         alert("Order placed successfully!");
         clearCart();

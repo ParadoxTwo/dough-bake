@@ -5,6 +5,7 @@ import { PaymentProviderFactory } from '@/lib/payment/factory'
 import type { PaymentVerifyRequest } from '@/lib/payment/types'
 import type { Database } from '@/lib/types/database.types'
 import { PaymentStatus } from '@/lib/types/payment'
+import { enqueueCreateDelivery, kickJobProcessor } from '@/lib/delivery/dispatch'
 
 type OrderUpdate = Database['public']['Tables']['orders']['Update']
 
@@ -70,13 +71,21 @@ export async function POST(request: Request) {
       if (updateError) {
         console.error('Error updating order:', updateError)
         return NextResponse.json(
-          { 
+          {
             ...result,
             error: 'Payment verified but failed to update order',
-            orderUpdateError: updateError.message 
+            orderUpdateError: updateError.message
           },
           { status: 500 }
         )
+      }
+
+      // Dispatch delivery (best-effort; never affects the payment response).
+      try {
+        await enqueueCreateDelivery(body.orderId)
+        kickJobProcessor()
+      } catch (deliveryError) {
+        console.error('Failed to enqueue delivery:', deliveryError)
       }
     } else if (result.verified && result.status === 'failed') {
       // Update order payment status to failed
