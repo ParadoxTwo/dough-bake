@@ -276,7 +276,12 @@ export async function processPendingDeliveryJobs(): Promise<{ processed: number;
 export function kickJobProcessor(): void {
   const base = process.env.NEXT_PUBLIC_SITE_URL
   const secret = process.env.JOBS_PROCESS_SECRET
-  if (!base || !secret) return
+  if (!base || !secret) {
+    console.warn(
+      'kickJobProcessor: NEXT_PUBLIC_SITE_URL or JOBS_PROCESS_SECRET not set; relying on the cron drainer'
+    )
+    return
+  }
 
   void fetch(`${base}/api/jobs/process`, {
     method: 'POST',

@@ -9,6 +9,11 @@ import type { Database } from '../types/database.types'
  * NEXT_PUBLIC_* variable.
  */
 export function createAdminClient() {
+  // Defense-in-depth: the service-role key must never run in the browser.
+  if (typeof window !== 'undefined') {
+    throw new Error('createAdminClient must only be used on the server')
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 

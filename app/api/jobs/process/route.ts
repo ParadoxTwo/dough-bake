@@ -1,7 +1,15 @@
+import crypto from 'crypto'
 import { NextResponse } from 'next/server'
 import { processPendingDeliveryJobs } from '@/lib/delivery/dispatch'
 
 export const runtime = 'nodejs'
+
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ab.length !== bb.length) return false
+  return crypto.timingSafeEqual(ab, bb)
+}
 
 // Secret-guarded queue drainer. Triggered by Vercel Cron (sends
 // `Authorization: Bearer ${CRON_SECRET}`) and by the in-app low-latency kick
@@ -12,7 +20,7 @@ function isAuthorized(request: Request): boolean {
 
   const header = request.headers.get('authorization') ?? ''
   const token = header.startsWith('Bearer ') ? header.slice(7) : header
-  return token === secret
+  return safeEqual(token, secret)
 }
 
 async function handle(request: Request) {
