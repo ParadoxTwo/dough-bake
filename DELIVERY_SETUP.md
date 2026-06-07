@@ -30,9 +30,12 @@ So you know exactly where the boundaries are:
 - Webhook route `app/api/delivery/webhook/[provider]` (status updates)
 - Admin "Delivery" settings UI (provider, credentials, pickup address) + delivery
   status/tracking and cancel on `/admin/orders`
+- Checkout drop-off coordinate capture: browser geolocation + Mapbox map pin +
+  manual entry (`NEXT_PUBLIC_MAPBOX_TOKEN`; degrades gracefully without it)
 
-**Pending (wiring — see [Roadmap](#9-roadmap-remaining-wiring))**
-- Checkout capture of drop-off lat/lng (text address is geocoded in the interim)
+The delivery feature is now wired end-to-end. See
+[DELIVERY_IMPLEMENTATION_PLAN.md](./DELIVERY_IMPLEMENTATION_PLAN.md) for the
+phase-by-phase record.
 
 Until the pending items land, you can still configure and exercise the Borzo
 adapter directly (quote/create/status), but **automatic dispatch and live status

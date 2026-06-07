@@ -52,8 +52,11 @@ A change is done only when **all** of these hold:
 
 - **Config is database-driven.** Payment and delivery providers read credentials
   from `site_settings` (JSON config), managed in the admin dashboard — **never**
-  from env. The app reads only `NEXT_PUBLIC_SUPABASE_URL`,
-  `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL`.
+  from env. Public env is `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`, and the optional
+  `NEXT_PUBLIC_MAPBOX_TOKEN` (URL-restricted public token for the checkout map).
+  Server-only secrets `SUPABASE_SERVICE_ROLE_KEY` and `JOBS_PROCESS_SECRET` power
+  delivery dispatch/webhooks and the queue drainer.
 - **Provider pattern.** New third-party integrations follow `lib/payment` and
   `lib/delivery`: a normalized interface + `Base*Provider` + a `*Factory` +
   settings in `site_settings` + an admin manager component.
