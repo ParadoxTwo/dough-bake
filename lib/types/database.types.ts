@@ -51,6 +51,8 @@ export interface Database {
           city: string | null
           state: string | null
           postal_code: string | null
+          lat: number | null
+          lng: number | null
           created_at: string
           updated_at: string
         }
@@ -63,6 +65,8 @@ export interface Database {
           city?: string | null
           state?: string | null
           postal_code?: string | null
+          lat?: number | null
+          lng?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -75,6 +79,8 @@ export interface Database {
           city?: string | null
           state?: string | null
           postal_code?: string | null
+          lat?: number | null
+          lng?: number | null
           created_at?: string
           updated_at?: string
         }

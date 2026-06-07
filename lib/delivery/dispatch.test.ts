@@ -11,6 +11,8 @@ describe('buildDropoffAddress', () => {
       city: 'Pune',
       state: 'MH',
       postal_code: '411001',
+      lat: null,
+      lng: null,
     })
     expect(addr.address).toBe('12 Baker St, Pune, MH, 411001')
     expect(addr.contactName).toBe('Asha')
@@ -25,9 +27,26 @@ describe('buildDropoffAddress', () => {
       city: null,
       state: null,
       postal_code: '411001',
+      lat: null,
+      lng: null,
     })
     expect(addr.address).toBe('12 Baker St, 411001')
     expect(addr.contactPhone).toBe('')
+  })
+
+  it('passes through coordinates when present', () => {
+    const addr = buildDropoffAddress({
+      name: 'Asha',
+      phone: '9000000000',
+      address: '12 Baker St',
+      city: 'Pune',
+      state: 'MH',
+      postal_code: '411001',
+      lat: 18.5204,
+      lng: 73.8567,
+    })
+    expect(addr.lat).toBe(18.5204)
+    expect(addr.lng).toBe(73.8567)
   })
 })
 

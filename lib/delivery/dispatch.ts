@@ -29,7 +29,10 @@ function adminDb(): SupabaseClient {
 
 /** Build a drop-off address from a customer record. */
 export function buildDropoffAddress(
-  customer: Pick<CustomerRow, 'name' | 'phone' | 'address' | 'city' | 'state' | 'postal_code'>
+  customer: Pick<
+    CustomerRow,
+    'name' | 'phone' | 'address' | 'city' | 'state' | 'postal_code' | 'lat' | 'lng'
+  >
 ): DeliveryAddress {
   const address = [customer.address, customer.city, customer.state, customer.postal_code]
     .filter((part): part is string => Boolean(part))
@@ -37,6 +40,8 @@ export function buildDropoffAddress(
 
   return {
     address,
+    lat: customer.lat ?? undefined,
+    lng: customer.lng ?? undefined,
     contactName: customer.name,
     contactPhone: customer.phone ?? '',
   }
@@ -185,12 +190,12 @@ export async function processCreateDelivery(job: Pick<JobRow, 'payload'>): Promi
 
   const { data: customerData } = await db
     .from('customers')
-    .select('name, phone, address, city, state, postal_code')
+    .select('name, phone, address, city, state, postal_code, lat, lng')
     .eq('id', order.customer_id)
     .single()
   const customer = customerData as Pick<
     CustomerRow,
-    'name' | 'phone' | 'address' | 'city' | 'state' | 'postal_code'
+    'name' | 'phone' | 'address' | 'city' | 'state' | 'postal_code' | 'lat' | 'lng'
   > | null
   if (!customer) throw new Error('Customer not found')
   if (!customer.phone) throw new Error('Customer phone number is required for delivery')
