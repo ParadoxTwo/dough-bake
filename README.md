@@ -186,6 +186,9 @@ and its credentials are stored in the database (`payment_settings`) and managed
 from the admin dashboard rather than via environment variables, so you can switch
 gateways without redeploying.
 
+Currently **Stripe** is the active provider — production uses live Stripe keys and
+local development uses Stripe test keys, both configured through the admin dashboard.
+
 ## Environment Variables
 
 The application reads the following variables (see `.env.local.example` and
