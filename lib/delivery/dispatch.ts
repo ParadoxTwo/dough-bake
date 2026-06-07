@@ -268,6 +268,71 @@ export async function processPendingDeliveryJobs(): Promise<{ processed: number;
   return { processed, failed }
 }
 
+export interface WebhookOutcome {
+  ok: boolean
+  verified: boolean
+  status?: number
+  error?: string
+}
+
+/**
+ * Verify and apply a provider status webhook: parse + signature-check via the
+ * provider, update the matching `deliveries` row by external_id, and complete
+ * the order when the delivery is delivered.
+ */
+export async function handleDeliveryWebhook(
+  providerName: DeliveryProvider,
+  rawBody: string,
+  headers: Record<string, string>
+): Promise<WebhookOutcome> {
+  const db = adminDb()
+
+  const config = await readDeliveryConfig(db)
+  if (!config) return { ok: false, verified: false, status: 503, error: 'Delivery is not configured' }
+  if (config.provider !== providerName) {
+    return { ok: false, verified: false, status: 400, error: 'Provider is not active' }
+  }
+
+  // Build the provider even if delivery is currently disabled — in-flight
+  // deliveries must still receive status updates.
+  const provider = DeliveryProviderFactory.createProvider({ ...config, enabled: true })
+  const result = await provider.handleWebhook(rawBody, headers)
+
+  // Reject unverified callbacks whenever a callback secret is configured.
+  const hasSecret = Boolean((config.config as { callbackSecret?: string }).callbackSecret)
+  if (hasSecret && !result.verified) {
+    return { ok: false, verified: false, status: 401, error: 'Invalid webhook signature' }
+  }
+  if (!result.externalId) {
+    return { ok: false, verified: result.verified, status: 400, error: result.error ?? 'Missing delivery id' }
+  }
+
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (result.status) update.status = result.status
+  if (result.riderName) update.rider_name = result.riderName
+  if (result.riderPhone) update.rider_phone = result.riderPhone
+  if (result.raw !== undefined) update.raw = result.raw as Json
+
+  const { data: updated } = await db
+    .from('deliveries')
+    .update(update)
+    .eq('provider', providerName)
+    .eq('external_id', result.externalId)
+    .select('order_id')
+    .maybeSingle()
+
+  // On delivery completion, mark the order completed.
+  if (result.status === DeliveryStatus.DELIVERED && updated) {
+    const orderId = (updated as { order_id: string }).order_id
+    await db
+      .from('orders')
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+  }
+
+  return { ok: true, verified: result.verified }
+}
+
 /**
  * Best-effort, non-blocking trigger of the queue drainer for low-latency
  * dispatch. The Vercel cron is the reliability backstop, so failures here are

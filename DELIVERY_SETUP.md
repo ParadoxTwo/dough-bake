@@ -24,13 +24,14 @@ So you know exactly where the boundaries are:
 - Borzo adapter — quote / create / status / cancel + webhook signature verification
 - Porter adapter — placeholder with status mapping + `TODO`s
 - `lib/actions/delivery.ts` — read/update provider config in `site_settings`
-- Migration `015_delivery.sql` — `deliveries` table + default settings rows
+- Migrations `015_delivery.sql` / `016_delivery_dispatch.sql` — `deliveries` table,
+  `job_queue` retry columns, and the `delivery_pickup` setting
+- Dispatch hook on payment success and checkout (via `job_queue` + `/api/jobs/process`)
+- Webhook route `app/api/delivery/webhook/[provider]` (status updates)
 
 **Pending (wiring — see [Roadmap](#9-roadmap-remaining-wiring))**
-- Dispatch hook on payment success (via `job_queue`)
-- Webhook route `app/api/delivery/webhook/[provider]`
 - Admin "Delivery" settings UI + tracking on `/admin/orders`
-- Checkout capture of drop-off lat/lng + pickup address in `site_settings`
+- Checkout capture of drop-off lat/lng (text address is geocoded in the interim)
 
 Until the pending items land, you can still configure and exercise the Borzo
 adapter directly (quote/create/status), but **automatic dispatch and live status
@@ -199,7 +200,7 @@ coordinates.
 ## 7. Webhooks
 
 Borzo pushes order/delivery status changes to a callback URL you register in the
-Personal Cabinet. The app endpoint (planned) is:
+Personal Cabinet. The app endpoint is:
 
 ```
 POST /api/delivery/webhook/borzo
@@ -207,8 +208,9 @@ POST /api/delivery/webhook/borzo
 
 - Borzo signs the request with the **`X-DV-Signature`** header; the adapter
   verifies it using `callbackSecret` + `callbackAlgo` (timing-safe compare).
-- The route (pending) will look up the `deliveries` row by `external_id`, map the
-  status, and update it (and optionally the order).
+  Unverified callbacks are rejected (401) whenever a `callbackSecret` is set.
+- The route looks up the `deliveries` row by `external_id`, maps the status, and
+  updates it — marking the order `completed` when the delivery is delivered.
 - `proxy.ts` excludes `/api/*` from the auth middleware, so webhook calls are not
   intercepted.
 
