@@ -247,5 +247,3 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full guide. In short:
 ## License
 
 MIT
-</content>
-</invoke>
