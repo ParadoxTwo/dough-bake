@@ -17,6 +17,8 @@ import { useCurrency } from "@/lib/currency/context";
 import type { PaymentProvider } from "@/lib/payment/types";
 import PaymentForm from "@/components/payment/PaymentForm";
 import { PaymentStatus } from "@/lib/types/payment";
+import { enqueueDeliveryForOrder } from "@/lib/actions/delivery";
+import LocationPicker from "@/components/checkout/LocationPicker";
 
 interface CustomerInfo {
   name: string;
@@ -25,6 +27,8 @@ interface CustomerInfo {
   city: string;
   state: string;
   postal_code: string;
+  lat: number | null;
+  lng: number | null;
 }
 
 type CustomerRow = Database["public"]["Tables"]["customers"]["Row"];
@@ -56,6 +60,8 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     postal_code: "",
+    lat: null,
+    lng: null,
   });
 
   useEffect(() => {
@@ -100,6 +106,8 @@ export default function CheckoutPage() {
           city: customerData.city || "",
           state: customerData.state || "",
           postal_code: customerData.postal_code || "",
+          lat: customerData.lat ?? null,
+          lng: customerData.lng ?? null,
         });
       }
 
@@ -134,6 +142,8 @@ export default function CheckoutPage() {
           city: formData.city,
           state: formData.state,
           postal_code: formData.postal_code,
+          lat: formData.lat,
+          lng: formData.lng,
         }
         // Type assertion needed because Supabase's type inference doesn't always work correctly
         const customersUpdateQuery = supabase.from("customers") as unknown as {
@@ -231,6 +241,13 @@ export default function CheckoutPage() {
         await ordersUpdateQuery
           .update(updateData)
           .eq("id", order.id);
+
+        // Dispatch delivery (best-effort; never blocks order completion).
+        try {
+          await enqueueDeliveryForOrder(order.id);
+        } catch (deliveryError) {
+          console.error("Failed to enqueue delivery:", deliveryError);
+        }
 
         alert("Order placed successfully!");
         clearCart();
@@ -385,6 +402,18 @@ export default function CheckoutPage() {
                     postal_code: e.target.value,
                   })
                 }
+              />
+
+              <LocationPicker
+                value={{ lat: formData.lat, lng: formData.lng }}
+                onChange={(coords) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    lat: coords?.lat ?? null,
+                    lng: coords?.lng ?? null,
+                  }))
+                }
+                disabled={submitting}
               />
             </div>
           </Card>

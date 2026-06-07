@@ -49,14 +49,17 @@ Create a `.env.local` file in the root directory:
 NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-local-anon-key-from-status
 
+# Public site URL (used for callbacks and CORS)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
 # Production Supabase (Optional - for production builds)
 # NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=your-production-anon-key
-
-# Razorpay (Optional - for payment testing)
-NEXT_PUBLIC_RAZORPAY_KEY_ID=your-razorpay-key-id
-RAZORPAY_KEY_SECRET=your-razorpay-key-secret
 ```
+
+> Payment provider credentials are configured from the admin dashboard (stored in
+> the `payment_settings` table), not via environment variables. Local development
+> uses Stripe test keys.
 
 **Quick way to get credentials:**
 

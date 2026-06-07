@@ -18,12 +18,12 @@ export function getDisplayStatus(status: string): string {
   return status
 }
 
-export function filterOrders(
-  orders: OrderWithDetails[],
+export function filterOrders<T extends OrderWithDetails>(
+  orders: T[],
   searchQuery: string,
   formatPrice: (amount: number) => string,
   convertPrice: (amount: number) => number
-): OrderWithDetails[] {
+): T[] {
   if (!searchQuery.trim()) {
     return orders
   }

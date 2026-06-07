@@ -51,6 +51,8 @@ export interface Database {
           city: string | null
           state: string | null
           postal_code: string | null
+          lat: number | null
+          lng: number | null
           created_at: string
           updated_at: string
         }
@@ -63,6 +65,8 @@ export interface Database {
           city?: string | null
           state?: string | null
           postal_code?: string | null
+          lat?: number | null
+          lng?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -75,6 +79,8 @@ export interface Database {
           city?: string | null
           state?: string | null
           postal_code?: string | null
+          lat?: number | null
+          lng?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -217,11 +223,13 @@ export interface Database {
       job_queue: {
         Row: {
           id: string
-          job_type: 'create_product' | 'update_product' | 'process_images'
+          job_type: 'create_product' | 'update_product' | 'process_images' | 'create_delivery'
           status: 'pending' | 'processing' | 'completed' | 'failed'
           payload: Json
           result: Json | null
           error_message: string | null
+          attempts: number
+          max_attempts: number
           created_at: string
           started_at: string | null
           completed_at: string | null
@@ -229,11 +237,13 @@ export interface Database {
         }
         Insert: {
           id?: string
-          job_type: 'create_product' | 'update_product' | 'process_images'
+          job_type: 'create_product' | 'update_product' | 'process_images' | 'create_delivery'
           status?: 'pending' | 'processing' | 'completed' | 'failed'
           payload: Json
           result?: Json | null
           error_message?: string | null
+          attempts?: number
+          max_attempts?: number
           created_at?: string
           started_at?: string | null
           completed_at?: string | null
@@ -241,11 +251,13 @@ export interface Database {
         }
         Update: {
           id?: string
-          job_type?: 'create_product' | 'update_product' | 'process_images'
+          job_type?: 'create_product' | 'update_product' | 'process_images' | 'create_delivery'
           status?: 'pending' | 'processing' | 'completed' | 'failed'
           payload?: Json
           result?: Json | null
           error_message?: string | null
+          attempts?: number
+          max_attempts?: number
           created_at?: string
           started_at?: string | null
           completed_at?: string | null
@@ -358,6 +370,53 @@ export interface Database {
           value?: string
           page?: string | null
           description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      deliveries: {
+        Row: {
+          id: string
+          order_id: string
+          provider: string
+          external_id: string | null
+          status: string
+          tracking_url: string | null
+          rider_name: string | null
+          rider_phone: string | null
+          fee: number | null
+          eta: string | null
+          raw: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          provider: string
+          external_id?: string | null
+          status?: string
+          tracking_url?: string | null
+          rider_name?: string | null
+          rider_phone?: string | null
+          fee?: number | null
+          eta?: string | null
+          raw?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          provider?: string
+          external_id?: string | null
+          status?: string
+          tracking_url?: string | null
+          rider_name?: string | null
+          rider_phone?: string | null
+          fee?: number | null
+          eta?: string | null
+          raw?: Json | null
           created_at?: string
           updated_at?: string
         }
