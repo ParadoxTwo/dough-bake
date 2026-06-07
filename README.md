@@ -240,6 +240,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full guide. In short:
 
 - [SETUP.md](./SETUP.md) — local setup and troubleshooting
 - [DEPLOYMENT.md](./DEPLOYMENT.md) — production deployment
+- [DELIVERY_SETUP.md](./DELIVERY_SETUP.md) — delivery integration (Borzo/Porter) setup
 - [DB_OPTIMIZATION.md](./DB_OPTIMIZATION.md) — database performance notes
 - [PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md) — project overview
 
