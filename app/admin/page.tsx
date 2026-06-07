@@ -14,6 +14,7 @@ import ThemedText from "@/components/ui/ThemedText";
 import AdminProductsList from "@/components/admin/AdminProductsList";
 import CurrencyManager from "@/components/admin/CurrencyManager";
 import PaymentManager from "@/components/admin/PaymentManager";
+import DeliveryManager from "@/components/admin/DeliveryManager";
 import CurrencyText from "@/components/ui/CurrencyText";
 import type { Database } from "@/lib/types/database.types";
 import { PaymentStatus } from "@/lib/types/payment";
@@ -132,6 +133,10 @@ export default async function AdminPage() {
 
       <div className="mb-8">
         <PaymentManager />
+      </div>
+
+      <div className="mb-8">
+        <DeliveryManager />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

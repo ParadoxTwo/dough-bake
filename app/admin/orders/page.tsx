@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import PageContainer from '@/components/layout/PageContainer'
 import PageHeader from '@/components/ui/PageHeader'
 import AdminOrdersList from '@/components/admin/AdminOrdersList'
+import type { DeliveryInfo } from '@/components/admin/OrderDelivery'
 import type { Database } from '@/lib/types/database.types'
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row']
@@ -16,6 +17,7 @@ type OrderWithDetails = OrderRow & {
   order_items: (OrderItemRow & {
     products: Pick<ProductRow, 'name' | 'category'> | null
   })[]
+  deliveries: DeliveryInfo | DeliveryInfo[] | null
 }
 
 export default async function AdminOrdersPage() {
@@ -62,6 +64,14 @@ export default async function AdminOrdersPage() {
           name,
           category
         )
+      ),
+      deliveries (
+        status,
+        tracking_url,
+        rider_name,
+        rider_phone,
+        fee,
+        external_id
       )
     `)
     .order('created_at', { ascending: false })

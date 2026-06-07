@@ -16,6 +16,16 @@ export interface DeliveryConfig {
   enabled: boolean
 }
 
+/** Bakery pickup address, stored in site_settings.delivery_pickup. */
+export interface DeliveryPickup {
+  address: string
+  lat?: number
+  lng?: number
+  contactName: string
+  contactPhone: string
+  note?: string
+}
+
 /**
  * Normalized delivery status used across the app, independent of any provider's
  * own vocabulary. Each provider maps its statuses onto these.

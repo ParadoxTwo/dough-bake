@@ -28,9 +28,10 @@ So you know exactly where the boundaries are:
   `job_queue` retry columns, and the `delivery_pickup` setting
 - Dispatch hook on payment success and checkout (via `job_queue` + `/api/jobs/process`)
 - Webhook route `app/api/delivery/webhook/[provider]` (status updates)
+- Admin "Delivery" settings UI (provider, credentials, pickup address) + delivery
+  status/tracking and cancel on `/admin/orders`
 
 **Pending (wiring — see [Roadmap](#9-roadmap-remaining-wiring))**
-- Admin "Delivery" settings UI + tracking on `/admin/orders`
 - Checkout capture of drop-off lat/lng (text address is geocoded in the interim)
 
 Until the pending items land, you can still configure and exercise the Borzo
@@ -119,9 +120,10 @@ Three rows in `site_settings` (seeded by migration `015`, defaults shown):
 
 ### How to set it
 
-Once the admin Delivery UI lands you'll do this from the dashboard (it calls
-`updateDeliverySettings()`, admin-only). Until then, set it with SQL — e.g. via
-`npm run supabase:reset` env, Supabase Studio (local) or the SQL Editor (hosted):
+Use the **Delivery Settings** card on the `/admin` dashboard (provider,
+credentials, pickup address, enable toggle) — it calls the admin-only
+`updateDeliverySettings()` / `updateDeliveryPickup()` actions. You can also set it
+directly with SQL via Supabase Studio (local) or the SQL Editor (hosted):
 
 ```sql
 update public.site_settings set value = 'borzo'  where key = 'delivery_provider';
